@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"booking-platform/internal/database"
 	"booking-platform/internal/server"
 )
 
@@ -38,6 +39,16 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 }
 
 func main() {
+	//init database
+	databaseContext := database.New()
+
+	//defer closing the connection
+	defer func() {
+		err := databaseContext.Close()
+		if err != nil {
+			fmt.Printf("Failed To Close Database Connection: %v", err)
+		}
+	}()
 
 	server := server.NewServer()
 

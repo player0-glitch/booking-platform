@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/gorilla/sessions"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -18,11 +21,18 @@ func (s *Server) RegisterRoutes() http.Handler {
 	return s.corsMiddleware(mux)
 }
 
+// Creating a cookie store
+// this will be used to 'rememeber' guests who visit the account
+var (
+	//Find a make command that can be used to create 256bit key
+	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+)
+
 func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*") // Replace "*" with specific origins if needed
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, PST, PUT, DELETE, OPTIONS, PATCH")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
 		w.Header().Set("Access-Control-Allow-Credentials", "false") // Set to "true" if credentials are required
 

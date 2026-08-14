@@ -36,3 +36,6 @@ main
 storage/*.sqlite
 storage/*.sqlite-shm
 storage/*.sqlite-wal
+
+# MISC 
+dump.rdb

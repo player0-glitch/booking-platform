@@ -1,0 +1,21 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  bin = "./tmp/worker/main"
+  cmd = "go build -o ./tmp/worjer/main ./cmd/worker/"
+  delay = 1000
+  include_ext["go"]
+  include_dir=["cmd/worker","internal"]
+  exclude_dir = ["docs","migrations","assets", "tmp", "vendor", "testdata", "node_modules"]
+  send_interrupt = true
+  stop_on_error = true
+
+[log]
+  time = true
+
+[color]
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"
