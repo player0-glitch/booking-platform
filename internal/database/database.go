@@ -2,14 +2,18 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
+
+	//replace sql* DB with gorm* DB
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -22,33 +26,58 @@ type Service interface {
 	// Close terminates the database connection.
 	// It returns an error if the connection cannot be closed.
 	Close() error
+	// DB returns the underlying GORM database instance that should
+	//only exist once I think
+	DB() *gorm.DB
 }
 
 type service struct {
-	db *sql.DB
+	// db *sql.DB
+	db *gorm.DB
 }
 
 var (
-	dburl      = os.Getenv("BLUEPRINT_DB_URL")
-	dbInstance *service
+	dburl = os.Getenv("DEV_DB_URL")
+	// dbInstance *service
+)
+
+// Trying to prevent 2 go routines from both intialising this service
+var (
+	dbInstance Service
+	dbOnce     sync.Once
 )
 
 func New() Service {
 	// Reuse Connection
-	if dbInstance != nil {
-		return dbInstance
-	}
+	dbOnce.Do(func() {
 
-	db, err := sql.Open("sqlite3", dburl)
-	if err != nil {
-		// This will not be a connection error, but a DSN parse error or
-		// another initialization error.
-		log.Fatal(err)
-	}
+		db, err := gorm.Open(
+			sqlite.Open(dburl), &gorm.Config{})
 
-	dbInstance = &service{
-		db: db,
-	}
+		// //replace sql with gorm
+		// db, err := gorm.Open(sqlite.Open(dburl),
+		// 	&gorm.Config{})
+
+		if err != nil {
+			// This will not be a connection error, but a DSN parse error or
+			// another initialization error.
+			log.Fatal(err)
+		}
+
+		//ping db to make sure it is connected once.
+		//I think this is to ensure that al
+		sqlDB, err := db.DB()
+		if err != nil {
+			log.Fatal(err)
+		}
+		if err := sqlDB.Ping(); err != nil {
+			log.Fatal(err)
+		}
+		dbInstance = &service{
+			db: db,
+		}
+
+	})
 	return dbInstance
 }
 
@@ -60,8 +89,15 @@ func (s *service) Health() map[string]string {
 
 	stats := make(map[string]string)
 
+	//Get the underlying *sql.DB from GORM
+	sqlDB, err := s.db.DB()
+	if err != nil {
+		stats["status"] = "down"
+		stats["error"] = fmt.Sprintf("db down: :%v", err)
+		return stats
+	}
 	// Ping the database
-	err := s.db.PingContext(ctx)
+	err = sqlDB.PingContext(ctx)
 	if err != nil {
 		stats["status"] = "down"
 		stats["error"] = fmt.Sprintf("db down: %v", err)
@@ -74,7 +110,7 @@ func (s *service) Health() map[string]string {
 	stats["message"] = "It's healthy"
 
 	// Get database stats (like open connections, in use, idle, etc.)
-	dbStats := s.db.Stats()
+	dbStats := sqlDB.Stats()
 	stats["open_connections"] = strconv.Itoa(dbStats.OpenConnections)
 	stats["in_use"] = strconv.Itoa(dbStats.InUse)
 	stats["idle"] = strconv.Itoa(dbStats.Idle)
@@ -108,6 +144,17 @@ func (s *service) Health() map[string]string {
 // If the connection is successfully closed, it returns nil.
 // If an error occurs while closing the connection, it returns the error.
 func (s *service) Close() error {
+	sqlDB, err := s.db.DB()
+
+	if err != nil {
+		return err
+	}
+
 	log.Printf("Disconnected from database: %s", dburl)
-	return s.db.Close()
+	return sqlDB.Close()
+}
+
+// DB returns the underlying GORM database instance.
+func (s *service) DB() *gorm.DB {
+	return s.db
 }
