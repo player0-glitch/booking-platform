@@ -32,3 +32,7 @@ main
 # OS X generated file
 .DS_Store
 
+# sqlite3 migrations
+storage/*.sqlite
+storage/*.sqlite-shm
+storage/*.sqlite-wal
