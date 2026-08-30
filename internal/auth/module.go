@@ -18,7 +18,7 @@ type Services struct {
 	UserSvc *services.UserService
 }
 
-// Module Controller Handler Same thing
+// Module Controller/Handler Same thing
 type Controllers struct {
 	UserHTTP *controllers.UserController
 }
@@ -61,7 +61,5 @@ func NewModule(params ModuleParams) (*Module, error) {
 }
 
 func (m *Module) RegisterRoutes(r chi.Router) {
-	r.Route("/users", func(sub chi.Router) {
-		sub.Post("/", m.Controllers.UserHTTP.Create)
-	})
+	r.Post("/users", m.Controllers.UserHTTP.Create)
 }

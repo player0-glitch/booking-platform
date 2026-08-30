@@ -37,7 +37,7 @@ func NewServer(params Params) *http.Server {
 	// Declare Server config
 	server := &http.Server{
 		Addr:    fmt.Sprintf(":%d", NewServer.port),
-		Handler: NewServer.RegisterRoutes(),
+		Handler: NewServer.Handler(),
 		// Handler:      NewServer.app.Router,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,

@@ -2,7 +2,8 @@ package controllers
 
 import (
 	"booking-platform/internal/auth/services"
-	"booking-platform/internal/core"
+	response "booking-platform/internal/core"
+
 	// "booking-platform/internal/core/response"
 	"encoding/json"
 	"errors"
@@ -28,8 +29,6 @@ type createUserRequest struct {
 
 var (
 	errJsonDecoder = errors.New("Failed To Decode Json")
-	errJsonEncoder = errors.New("Failed To Encode Json")
-	errUserCreate  = errors.New("Failed To Store User")
 )
 
 // End Point
@@ -37,7 +36,7 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	//create a request type
 	var userRequest createUserRequest
 	//parse the json request
-	errJsonDecoder := json.NewDecoder(r.Body).Decode(&userRequest)
+	errJsonDecoder = json.NewDecoder(r.Body).Decode(&userRequest)
 
 	if errJsonDecoder != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")

@@ -9,15 +9,14 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-func (s *Server) RegisterRoutes() http.Handler {
-	router := s.app.Router
+func (s *Server) Handler() http.Handler {
 
 	// Register routes
-	router.Get("/", s.HelloWorldHandler)
+	s.app.Router.Get("/", s.HelloWorldHandler)
 
-	router.Get("/health", s.healthHandler)
+	s.app.Router.Get("/health", s.healthHandler)
 	// Wrap the mux with CORS middleware
-	return s.corsMiddleware(router)
+	return s.corsMiddleware(s.app.Router)
 }
 
 // Creating a cookie store
@@ -31,7 +30,7 @@ func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Set CORS headers
 		w.Header().Set("Access-Control-Allow-Origin", "*") // Replace "*" with specific origins if needed
-		w.Header().Set("Access-Control-Allow-Methods", "GET, PST, PUT, DELETE, OPTIONS, PATCH")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
 		w.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, X-CSRF-Token")
 		w.Header().Set("Access-Control-Allow-Credentials", "false") // Set to "true" if credentials are required
 
