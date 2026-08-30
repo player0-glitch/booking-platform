@@ -24,7 +24,7 @@ setup:
 dev: 
 	@make redis-install
 	@echo "Running dev mode in 3 different thread"
-	@make -j 3 api frontend worker
+	@make -j 3 api worker frontend
 
 # this air commands hot reloads the api
 api:

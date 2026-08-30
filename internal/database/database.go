@@ -47,38 +47,43 @@ var (
 	dbOnce     sync.Once
 )
 
-func New() Service {
+func New() (Service, error) {
+	var initError error
 	// Reuse Connection
 	dbOnce.Do(func() {
 
 		db, err := gorm.Open(
 			sqlite.Open(dburl), &gorm.Config{})
 
-		// //replace sql with gorm
-		// db, err := gorm.Open(sqlite.Open(dburl),
-		// 	&gorm.Config{})
-
 		if err != nil {
 			// This will not be a connection error, but a DSN parse error or
-			// another initialization error.
+			initError = err
 			log.Fatal(err)
+			return
 		}
 
 		//ping db to make sure it is connected once.
 		//I think this is to ensure that al
 		sqlDB, err := db.DB()
 		if err != nil {
+			initError = err
 			log.Fatal(err)
+			return
 		}
 		if err := sqlDB.Ping(); err != nil {
+			initError = err
 			log.Fatal(err)
+			return
 		}
 		dbInstance = &service{
 			db: db,
 		}
-
 	})
-	return dbInstance
+
+	if initError != nil {
+		return nil, initError
+	}
+	return dbInstance, nil
 }
 
 // Health checks the health of the database connection by pinging the database.
@@ -155,6 +160,7 @@ func (s *service) Close() error {
 }
 
 // DB returns the underlying GORM database instance.
+// As this is how we interface with the db
 func (s *service) DB() *gorm.DB {
 	return s.db
 }

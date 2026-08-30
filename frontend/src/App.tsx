@@ -5,6 +5,7 @@ function App() {
   const [message, setMessage] = useState<string>('')
 
   const fetchData = () => {
+    console.log(`This is where vite is looking http://localhost:${import.meta.env.VITE_PORT}/`)
     fetch(`http://localhost:${import.meta.env.VITE_PORT}/`)
       .then(response => response.text())
       .then(data => setMessage(data))
@@ -31,7 +32,7 @@ function App() {
             >
               Count is {count}
             </button>
-            
+
             <button
               onClick={fetchData}
               className="block w-full bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-md transition-colors"

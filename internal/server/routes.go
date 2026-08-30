@@ -10,15 +10,14 @@ import (
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
-	mux := http.NewServeMux()
+	router := s.app.Router
 
 	// Register routes
-	mux.HandleFunc("/", s.HelloWorldHandler)
+	router.Get("/", s.HelloWorldHandler)
 
-	mux.HandleFunc("/health", s.healthHandler)
-
+	router.Get("/health", s.healthHandler)
 	// Wrap the mux with CORS middleware
-	return s.corsMiddleware(mux)
+	return s.corsMiddleware(router)
 }
 
 // Creating a cookie store

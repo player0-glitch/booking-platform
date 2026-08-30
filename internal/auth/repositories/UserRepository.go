@@ -34,3 +34,15 @@ func (repo *UserRepository) FindById(id int) (*models.User, error) {
 	}
 	return &user, nil
 }
+
+func (repo *UserRepository) DeleteById(id int) error {
+	var user models.User
+	return repo.dbContext.Delete(&user, id).Error
+}
+func (repo *UserRepository) DeleteByEmail(email string) error {
+	/*this permanently deletes the records instead of setting
+	*  deleted_at column to a timestamp (Soft Delete)
+	 */
+	return repo.dbContext.Unscoped().Delete(&email).Error
+
+}

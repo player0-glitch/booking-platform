@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"booking-platform/internal/application"
 	"booking-platform/internal/database"
 	"booking-platform/internal/server"
 )
@@ -40,7 +41,7 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 
 func main() {
 	//init database
-	databaseContext := database.New()
+	databaseContext, _ := database.New()
 
 	//defer closing the connection
 	defer func() {
@@ -50,20 +51,28 @@ func main() {
 		}
 	}()
 
-	server := server.NewServer()
+	//Initialise the modularized application
+	app, err := application.NewApplication(
+		databaseContext.DB(),
+	)
+	if err != nil {
+		return
+	}
+	//DEBUG
+	fmt.Println("Registered Module auth")
 
+	server := server.NewServer(server.Params{Application: app})
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
 	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
-
-	err := server.ListenAndServe()
-	if err != nil && err != http.ErrServerClosed {
+	fmt.Println("Starting Server ....")
+	if err := server.ListenAndServe(); err != nil &&
+		err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
-
-	// Wait for the graceful shutdown to complete
+	fmt.Println("Wait for the graceful shutdown to complete.")
 	<-done
 	log.Println("Graceful shutdown complete.")
 }
