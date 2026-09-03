@@ -3,11 +3,12 @@ package controllers
 import (
 	"booking-platform/internal/auth/services"
 	response "booking-platform/internal/core"
-
-	// "booking-platform/internal/core/response"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
+	"strconv"
+
+	chi "github.com/go-chi/chi/v5"
 )
 
 type UserController struct {
@@ -24,16 +25,10 @@ type createUserRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
 	Email     string `json:"email"`
-	Password  string `json:"passsword"`
+	Password  string `json:"password"`
 }
 
-var (
-	errJsonDecoder = errors.New("Failed To Decode Json")
-)
-
-// End Point
 func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
-	//create a request type
 	var userRequest createUserRequest
 	//parse the json request
 	errJsonDecoder = json.NewDecoder(r.Body).Decode(&userRequest)
@@ -42,12 +37,68 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	user, errSvc := c.userService.CreateUser(userRequest.FirstName,
-		userRequest.LastName, userRequest.Email, userRequest.Password)
+	user, errSvc := c.userService.CreateUser(userRequest.FirstName, userRequest.LastName, userRequest.Email, userRequest.Password)
 
 	if errSvc != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed To Create User")
 		return
 	}
 	response.JSON(w, http.StatusCreated, &user)
+}
+
+func (c *UserController) FindAll(w http.ResponseWriter, r *http.Request) {
+	users, err := c.userService.FindAll()
+	if err != nil {
+		response.Error(w, http.StatusInternalServerError, "Server Failed To Get All Users")
+		return
+	}
+
+	if len(users) == 0 {
+		response.JSON(w, http.StatusNotFound, "No Users")
+		return
+	}
+	response.JSON(w, http.StatusFound, users)
+}
+func (c *UserController) GetById(w http.ResponseWriter, r *http.Request) {
+
+	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
+	if errParse != nil {
+		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
+		return
+	}
+	user, errSvc := c.userService.GetById(id)
+	if errSvc != nil {
+		response.Error(w, http.StatusNotFound, fmt.Sprintf("User with id=%d not found", id))
+		return
+	}
+
+	response.JSON(w, http.StatusFound, user)
+}
+
+func (c *UserController) DeleteById(w http.ResponseWriter, r *http.Request) {
+	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
+	if errParse != nil {
+		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
+		return
+	}
+	err := c.userService.DeleteById(id)
+	if err != nil {
+		response.Error(w, http.StatusNotFound, "User Not found")
+		return
+	}
+	response.JSON(w, http.StatusAccepted, "User Deleted")
+}
+
+func (c *UserController) SoftDeleteById(w http.ResponseWriter, r *http.Request) {
+	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
+	if errParse != nil {
+		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
+		return
+	}
+	err := c.userService.SoftDelete(id)
+	if err != nil {
+		response.Error(w, http.StatusNotFound, "User Not found")
+		return
+	}
+	response.JSON(w, http.StatusAccepted, "User Deleted Softly")
 }

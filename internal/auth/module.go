@@ -1,11 +1,12 @@
 package auth
 
 import (
+	// controller "booking-platform/internal/auth/"
 	"booking-platform/internal/auth/controllers"
 	"booking-platform/internal/auth/repositories"
 	"booking-platform/internal/auth/services"
 
-	"github.com/go-chi/chi/v5"
+	chi "github.com/go-chi/chi/v5"
 	"gorm.io/gorm"
 )
 
@@ -61,5 +62,11 @@ func NewModule(params ModuleParams) (*Module, error) {
 }
 
 func (m *Module) RegisterRoutes(r chi.Router) {
-	r.Post("/users", m.Controllers.UserHTTP.Create)
+	r.Route("/users", func(r chi.Router) {
+		r.Post("/", m.Controllers.UserHTTP.Create)
+		r.Get("/{id}", m.Controllers.UserHTTP.GetById)
+		r.Delete("/{id}", m.Controllers.UserHTTP.DeleteById)
+		r.Delete("/{id}/soft", m.Controllers.UserHTTP.SoftDeleteById)
+		r.Get("/all", m.Controllers.UserHTTP.FindAll)
+	})
 }

@@ -18,27 +18,39 @@ func NewUserRepo(dbContext *gorm.DB) *UserRepository {
 	}
 }
 
-// Create a user
-func (repo *UserRepository) Create(user *models.User) error {
-	//The error is returned only if it occurs
-	return repo.dbContext.Create(&user).Error
+func (r *UserRepository) Create(user *models.User) error {
+	return r.dbContext.Create(&user).Error
 }
 
-func (repo *UserRepository) FindById(id int) (*models.User, error) {
+func (r *UserRepository) FindById(id int) (*models.User, error) {
 	var user models.User
-	err := repo.dbContext.First(&user, id).Error
+	err := r.dbContext.First(&user, id).Error
 
-	//error cheching before return valid ojeect
 	if err != nil {
-		return nil, err
+		return nil, errRecordNotFound
 	}
 	return &user, nil
 }
 
-func (repo *UserRepository) DeleteById(id int) error {
-	var user models.User
-	return repo.dbContext.Delete(&user, id).Error
+func (r *UserRepository) FindAll() ([]models.User, error) {
+	var users []models.User
+	err := r.dbContext.Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
+
+func (r *UserRepository) DeleteById(id int) error {
+	var user models.User
+	return r.dbContext.Unscoped().Delete(&user, id).Error
+}
+
+func (r *UserRepository) SoftDeleteById(id int) error {
+	var user models.User
+	return r.dbContext.Delete(&user, id).Error
+}
+
 func (repo *UserRepository) DeleteByEmail(email string) error {
 	/*this permanently deletes the records instead of setting
 	*  deleted_at column to a timestamp (Soft Delete)
