@@ -71,7 +71,7 @@ go-blueprint create \
 # Blueprint isn't going to do everything
 mkdir -p \
  cmd/worker \
-  internal/auth \
+  internal/user \
   internal/booking \
   internal/calendar \
   internal/guest \

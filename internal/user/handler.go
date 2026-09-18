@@ -1,7 +1,6 @@
-package controllers
+package user
 
 import (
-	"booking-platform/internal/auth/services"
 	response "booking-platform/internal/core"
 	"encoding/json"
 	"fmt"
@@ -12,10 +11,10 @@ import (
 )
 
 type UserController struct {
-	userService *services.UserService
+	userService *UserService
 }
 
-func NewUserController(userSvc *services.UserService) *UserController {
+func NewUserController(userSvc *UserService) *UserController {
 	return &UserController{
 		userService: userSvc,
 	}
@@ -37,7 +36,7 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	user, errSvc := c.userService.CreateUser(userRequest.FirstName, userRequest.LastName, userRequest.Email, userRequest.Password)
+	user, errSvc := c.userService.CreateUser(r.Context(), userRequest.FirstName, userRequest.LastName, userRequest.Email, userRequest.Password)
 
 	if errSvc != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed To Create User")
@@ -47,7 +46,7 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (c *UserController) FindAll(w http.ResponseWriter, r *http.Request) {
-	users, err := c.userService.FindAll()
+	users, err := c.userService.FindAll(r.Context())
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Server Failed To Get All Users")
 		return
@@ -66,7 +65,7 @@ func (c *UserController) GetById(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	user, errSvc := c.userService.GetById(id)
+	user, errSvc := c.userService.GetById(r.Context(), id)
 	if errSvc != nil {
 		response.Error(w, http.StatusNotFound, fmt.Sprintf("User with id=%d not found", id))
 		return
@@ -81,7 +80,7 @@ func (c *UserController) DeleteById(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	err := c.userService.DeleteById(id)
+	err := c.userService.DeleteById(r.Context(), id)
 	if err != nil {
 		response.Error(w, http.StatusNotFound, "User Not found")
 		return
@@ -95,7 +94,7 @@ func (c *UserController) SoftDeleteById(w http.ResponseWriter, r *http.Request) 
 		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	err := c.userService.SoftDelete(id)
+	err := c.userService.SoftDelete(r.Context(), id)
 	if err != nil {
 		response.Error(w, http.StatusNotFound, "User Not found")
 		return

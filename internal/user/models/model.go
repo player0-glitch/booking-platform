@@ -1,4 +1,4 @@
-// auth/models/user.go
+// user/models/user.go
 package models
 
 import "gorm.io/gorm"

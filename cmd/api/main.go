@@ -9,12 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"booking-platform/internal/application"
+	"booking-platform/internal/app"
 	"booking-platform/internal/database"
 	"booking-platform/internal/server"
+	"booking-platform/internal/user"
 )
 
-func gracefulShutdown(apiServer *http.Server, done chan bool) {
+func gracefulShutdown(apiServer *http.Server, application *app.Application, done chan<- bool) {
 	// Create context that listens for the interrupt signal from the OS.
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
@@ -32,6 +33,9 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 	if err := apiServer.Shutdown(ctx); err != nil {
 		log.Printf("Server forced to shutdown with error: %v", err)
 	}
+	if err := application.Stop(ctx); err != nil {
+		log.Printf("Failed to stop application modules: %v", err)
+	}
 
 	log.Println("Server exiting")
 
@@ -41,8 +45,10 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 
 func main() {
 	//init database
-	databaseContext, _ := database.New()
-
+	databaseContext, err := database.New()
+	if err != nil {
+		log.Fatalf("Failed To Start Database Service: %s", err)
+	}
 	//defer closing the connection
 	defer func() {
 		err := databaseContext.Close()
@@ -52,21 +58,35 @@ func main() {
 	}()
 
 	//Initialise the modularized application
-	app, err := application.NewApplication(
-		databaseContext.DB(),
-	)
-	if err != nil {
-		return
+	fmt.Println("Registered Module user")
+	userModule, errInitModule := user.NewModule(user.ModuleParams{
+		DB: databaseContext.DB(),
+	})
+	if errInitModule != nil {
+		log.Fatalf("%s", errInitModule.Error())
 	}
-	//DEBUG
-	fmt.Println("Registered Module auth")
+	app, errAppStart := app.NewApplication(
+		userModule,
+	)
+	if errAppStart != nil {
+		log.Fatalf("%s", errAppStart.Error())
+	}
+	//Starting the application with context
+	if err := app.Start(context.Background()); err != nil {
+		log.Fatalf("Failed To Start Application: %s", err.Error())
+	}
 
-	server := server.NewServer(server.Params{Application: app})
+	server := server.NewServer(server.Params{
+		Application: app,
+		Database:    databaseContext,
+		// Port:        8080,
+	})
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
 	// Run graceful shutdown in a separate goroutine
-	go gracefulShutdown(server, done)
+	go gracefulShutdown(server, app, done)
+
 	fmt.Println("Starting Server ....")
 	if err := server.ListenAndServe(); err != nil &&
 		err != http.ErrServerClosed {

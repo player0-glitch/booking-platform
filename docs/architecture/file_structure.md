@@ -4,7 +4,7 @@ The internal structure of the backend holding the modules of the monolith
 
 ```
 internal/
-├── auth/
+├── user/
 │ ├── handlers/
 │ │ └── user_handler.go
 │ ├── models/

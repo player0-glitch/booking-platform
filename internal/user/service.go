@@ -1,8 +1,8 @@
-package services
+package user
 
 import (
-	"booking-platform/internal/auth/models"
-	"booking-platform/internal/auth/repositories"
+	"booking-platform/internal/user/models"
+	"context"
 	"errors"
 	"fmt"
 
@@ -16,21 +16,21 @@ type CreateUserInput struct {
 }
 
 type UserService struct {
-	userRepo repositories.UserRepository
+	userRepo *UserRepository
 }
 
 var (
 	ErrUserNotFound = errors.New("User Not Found")
 )
 
-func NewUserService(userRepository repositories.UserRepository) *UserService {
+func NewUserService(userRepository *UserRepository) *UserService {
 	return &UserService{
 		userRepo: userRepository,
 	}
 }
 
 // all these parameters are types
-func (u *UserService) CreateUser(name, lastName, email, passsword string) (*models.User, error) {
+func (u *UserService) CreateUser(ctx context.Context, name, lastName, email, passsword string) (*models.User, error) {
 
 	passwordHash, err := u.hashPassword(passsword)
 	if err != nil {
@@ -42,35 +42,36 @@ func (u *UserService) CreateUser(name, lastName, email, passsword string) (*mode
 		LastName:     lastName,
 		PasswordHash: passwordHash,
 	}
-	notFoundError := u.userRepo.Create(user)
+	notFoundError := u.userRepo.Create(ctx, user)
 	if notFoundError != nil {
 		return nil, notFoundError
 	}
 	return user, nil
 }
 
-func (s *UserService) GetById(id int) (*models.User, error) {
-	user, err := s.userRepo.FindById(id)
+func (s *UserService) GetById(ctx context.Context, id int) (*models.User, error) {
+	user, err := s.userRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
 
-func (s *UserService) DeleteById(id int) error {
-	return s.userRepo.DeleteById(id)
+func (s *UserService) DeleteById(ctx context.Context, id int) error {
+	return s.userRepo.DeleteById(ctx, id)
 }
 
-func (s *UserService) SoftDelete(id int) error {
-	return s.userRepo.SoftDeleteById(id)
+func (s *UserService) SoftDelete(ctx context.Context, id int) error {
+	return s.userRepo.SoftDeleteById(ctx, id)
 }
-func (s *UserService) FindAll() ([]models.User, error) {
-	users, err := s.userRepo.FindAll()
+func (s *UserService) FindAll(ctx context.Context) ([]models.User, error) {
+	users, err := s.userRepo.FindAll(ctx)
 	if err != nil {
 		return []models.User{}, err
 	}
 	return users, nil
 }
+
 func (s *UserService) hashPassword(password string) (string, error) {
 	//automatic salt generation happens under the hood
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

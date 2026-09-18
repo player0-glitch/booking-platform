@@ -15,6 +15,7 @@ func (s *Server) Handler() http.Handler {
 	s.app.Router.Get("/", s.HelloWorldHandler)
 
 	s.app.Router.Get("/health", s.healthHandler)
+	s.app.Router.Post("/hello", s.HelloWorldHandler)
 	// Wrap the mux with CORS middleware
 	return s.corsMiddleware(s.app.Router)
 }

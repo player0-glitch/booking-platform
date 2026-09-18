@@ -9,35 +9,38 @@ import (
 
 	_ "github.com/joho/godotenv/autoload"
 
-	"booking-platform/internal/application"
+	"booking-platform/internal/app"
 	"booking-platform/internal/database"
 )
 
 type Server struct {
 	port int
 	db   database.Service
-	app  *application.Application
+	app  *app.Application
 }
 type Params struct {
-	Application *application.Application
+	Application *app.Application
+	Database    database.Service
+	// Port        int
 }
 
 func NewServer(params Params) *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	database, _ := database.New()
+	// database, _ := database.New()
 
 	//Init server
-	NewServer := &Server{
+	serverInstance := &Server{
 		port: port,
+		// port:params.Port
 		//Pass in a pointer of applications
 		app: params.Application,
-		db:  database,
+		db:  params.Database,
 	}
 
 	// Declare Server config
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", NewServer.port),
-		Handler: NewServer.Handler(),
+		Addr:    fmt.Sprintf(":%d", serverInstance.port),
+		Handler: serverInstance.Handler(),
 		// Handler:      NewServer.app.Router,
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
