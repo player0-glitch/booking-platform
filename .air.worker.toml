@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  bin = "./tmp/worker/main"
+  entrypoint = "./tmp/worker/main"
   cmd = "go build -o ./tmp/worjer/main ./cmd/worker/"
   delay = 1000
   include_ext["go"]

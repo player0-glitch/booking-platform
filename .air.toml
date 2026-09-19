@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 
 [build]
   args_bin = []
-  bin = "./tmp/api/main"
+  entrypoint = "./tmp/api/main"
   cmd = "go build -o ./tmp/api/main ./cmd/api"
   delay = 1000
   exclude_dir = ["docs","migrations","assets", "tmp", "vendor", "testdata", "node_modules"]
