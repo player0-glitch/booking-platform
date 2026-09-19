@@ -1,7 +1,7 @@
 package user
 
 import (
-	"booking-platform/internal/user/models"
+	"booking-platform/internal/modules/user/models"
 	"context"
 	"errors"
 	"fmt"
@@ -9,11 +9,11 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type CreateUserInput struct {
-	Name     string
-	LastName string
-	Password string
-}
+// type CreateUserInput struct {
+// 	Name     string
+// 	LastName string
+// 	Password string
+// }
 
 type UserService struct {
 	userRepo *UserRepository

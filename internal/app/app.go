@@ -3,11 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
 
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/gorilla/sessions"
 )
 
 type Module interface {
@@ -36,14 +34,6 @@ func NewApplication(modules ...Module) (*Application, error) {
 	// then returns HTTP 500 status
 	baseRouter.Use(middleware.Recoverer)
 
-	sessionStore := sessions.NewCookieStore([]byte(os.Getenv("SESSION_STORE_KEY")))
-	sessionStore.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   3600 * 2, /*lives for 2 hours*/
-		HttpOnly: true,     /* for prod to try and protect from csrf*/
-		Secure:   true,
-	}
-
 	app := &Application{
 		Router: baseRouter,
 	}
@@ -64,6 +54,7 @@ func (a *Application) RegisterModule(module Module) error {
 	}
 	a.Modules = append(a.Modules, module)
 	module.RegisterRoutes(a.Router)
+
 	return nil
 }
 

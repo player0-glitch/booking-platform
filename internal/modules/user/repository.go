@@ -1,7 +1,7 @@
 package user
 
 import (
-	"booking-platform/internal/user/models"
+	"booking-platform/internal/modules/user/models"
 	"context"
 
 	"gorm.io/gorm"

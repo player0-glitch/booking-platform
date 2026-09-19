@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"booking-platform/internal/app"
+	"booking-platform/internal/auth"
 	"booking-platform/internal/database"
+	"booking-platform/internal/modules/user"
 	"booking-platform/internal/server"
-	"booking-platform/internal/user"
 )
 
 func gracefulShutdown(apiServer *http.Server, application *app.Application, done chan<- bool) {
@@ -59,14 +61,14 @@ func main() {
 
 	//Initialise the modularized application
 	fmt.Println("Registered Module user")
-	userModule, errInitModule := user.NewModule(user.ModuleParams{
-		DB: databaseContext.DB(),
+	authModule := auth.NewModule(os.Getenv("SESSION_STORE_KEY"))
+	userModule := user.NewModule(user.ModuleParams{
+		DB:             databaseContext.DB(),
+		AuthMiddleware: authModule.AuthMiddlware,
 	})
-	if errInitModule != nil {
-		log.Fatalf("%s", errInitModule.Error())
-	}
+
 	app, errAppStart := app.NewApplication(
-		userModule,
+		authModule, userModule,
 	)
 	if errAppStart != nil {
 		log.Fatalf("%s", errAppStart.Error())

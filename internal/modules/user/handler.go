@@ -28,15 +28,15 @@ type createUserRequest struct {
 }
 
 func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
-	var userRequest createUserRequest
+	var req createUserRequest
 	//parse the json request
-	errJsonDecoder = json.NewDecoder(r.Body).Decode(&userRequest)
+	errJsonDecoder = json.NewDecoder(r.Body).Decode(&req)
 
 	if errJsonDecoder != nil {
 		response.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	user, errSvc := c.userService.CreateUser(r.Context(), userRequest.FirstName, userRequest.LastName, userRequest.Email, userRequest.Password)
+	user, errSvc := c.userService.CreateUser(r.Context(), req.FirstName, req.LastName, req.Email, req.Password)
 
 	if errSvc != nil {
 		response.Error(w, http.StatusInternalServerError, "Failed To Create User")
