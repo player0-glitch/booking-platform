@@ -1,6 +1,5 @@
 .PHONY: all build setup dev api worker frontend worker redis test \
-	fmt lint redis-install migrate-up migrate-down migration-status \
-	migration migrate-force debug
+fmt lint redis-install debug
 
 debug:
 	@echo "MAKE IS RUNNING IN $(CURDIR)"
@@ -104,21 +103,22 @@ test:
 # 000001 -> migration order
 # user -> module/domain
 # create-> migration action i guess i don't know
+.PHONY: migrate-status migrate-up migrate-down 	migration migrate-force
 DB_URL = sqlite3://storage/go_db.sqlite
 MIGRATIONS_DIR = migrations
 
--migration:
+migration:
 	echo "$(MIGRATIONS_DIR)"
 	@read -p "migration name: " name; \
-		migrate create -ext sql -dir "$(MIGRATIONS_DIR)" -seq "$$name"
+		migrate create -ext sql -dir "$(MIGRATIONS_DIR)" -seq=false "$$name"
 
--migration-status:
+migration-status:
 	migrate -path $(MIGRATIONS_DIR) -database '$(DB_URL)' version
 
--migrate-up:
+migrate-up:
 	migrate -path $(MIGRATIONS_DIR) -database '$(DB_URL)' up
 
--migrate-down:
+migrate-down:
 	migrate -path $(MIGRATIONS_DIR) -database '$(DB_URL)' down 1
 
 #helps to clean db by rolling to latest clean state
@@ -126,3 +126,29 @@ migrate-force:
 	@echo "Forcing database to latest clean start $(version)"
 	migrate -path $(MIGRATIONS_DIR) -database '$(DB_URL)' force $(version)
 
+DB_FILE ?= storage/go_db.sqlite
+MIGRATIONS_DIR ?= internal/store/migrations
+
+migrate-status:
+	@echo "=================================================================="
+	@echo "                      MIGRATION STATUS                            "
+	@echo "=================================================================="
+	@if [ ! -f "$(DB_FILE)" ]; then \
+		echo "Database file '$(DB_FILE)' does not exist."; \
+		exit 0; \
+	fi; \
+	APPLIED_VER=$$(sqlite3 $(DB_FILE) "SELECT version FROM schema_migrations WHERE dirty=0 ORDER BY version DESC LIMIT 1;" 2>/dev/null); \
+	DIRTY_VER=$$(sqlite3 $(DB_FILE) "SELECT version FROM schema_migrations WHERE dirty=1 LIMIT 1;" 2>/dev/null); \
+	for file in $$(ls -1 $(MIGRATIONS_DIR)/*.up.sql 2>/dev/null | sort); do \
+		fname=$$(basename $$file); \
+		ver=$$(echo $$fname | cut -d'_' -f1); \
+		name=$$(echo $$fname | cut -d'_' -f2- | sed 's/\.up\.sql//'); \
+		if [ -n "$$DIRTY_VER" ] && [ "$$ver" = "$$DIRTY_VER" ]; then \
+			status="[ DIRTY / FAILED ]"; \
+		elif [ -n "$$APPLIED_VER" ] && [ "$$ver" -le "$$APPLIED_VER" ]; then \
+			status="[ APPLIED ]"; \
+		else \
+			status="[ PENDING ]"; \
+		fi; \
+		printf "%-16s | %-30s | %s\n" "$$ver" "$$name" "$$status"; \
+	done
