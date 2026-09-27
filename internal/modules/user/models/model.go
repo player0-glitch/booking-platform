@@ -1,13 +1,19 @@
-// user/models/user.go
 package models
 
 import "gorm.io/gorm"
 
 type User struct {
-	gorm.Model
-	FirstName    string         `gorm:"not null"`
-	LastName     string         `gorm:"not null"`
-	Email        string         `gorm:"uniqueIndex;not null"`
-	PasswordHash string         `gorm:"not null"`
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	gorm.Model          //id,created_at,updated_at
+	FirstName    string `gorm:"not null"`
+	LastName     string `gorm:"not null"`
+	Email        string `gorm:"uniqueIndex;not null"`
+	PasswordHash string `gorm:"not null"`
+	//This is for earger loading in a joining query
+	Roles     []Role         `json:"omitempty" gorm:"many2many;user_roles"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+type Role struct {
+	gorm.Model        //makes id,created_at,updated_at and deleted_at
+	RoleName   string `gorm:"unique;not null"`
 }

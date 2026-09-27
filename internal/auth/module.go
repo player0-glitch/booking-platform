@@ -1,6 +1,8 @@
 package auth
 
 import (
+	core "booking-platform/internal/core/contracts"
+
 	chi "github.com/go-chi/chi/v5"
 )
 
@@ -20,7 +22,7 @@ func (m *Module) Name() string {
 func NewModule(jwtSecret string) *Module {
 	jwtBytes := []byte(jwtSecret)
 	//AuthService implements Authenticate that authenticator uses
-	srv := NewAuthService(jwtBytes)
+	srv := NewAuthService(core.UserReader, jwtBytes)
 	store := NewStoreManager(jwtBytes, "app_session")
 	return &Module{
 		// session: s,
@@ -35,6 +37,6 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 		//These endpoints should  be standalone
 		//They both are concerned about auth but carry totaly different responsibilities
 		r.Post("/login", m.handler.Login)
-		// r.Post("/logout", m.handler.Logout)
+		r.Post("/logout", m.handler.Logout)
 	})
 }

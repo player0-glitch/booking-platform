@@ -60,7 +60,7 @@ func main() {
 	}()
 
 	//Initialise the modularized application
-	fmt.Println("Registered Module user")
+	fmt.Println("Registering Modules")
 	authModule := auth.NewModule(os.Getenv("SESSION_STORE_KEY"))
 	userModule := user.NewModule(user.ModuleParams{
 		DB:             databaseContext.DB(),
@@ -81,7 +81,7 @@ func main() {
 	server := server.NewServer(server.Params{
 		Application: app,
 		Database:    databaseContext,
-		// Port:        8080,
+		Port:        8080,
 	})
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
@@ -94,7 +94,6 @@ func main() {
 		err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
-	fmt.Println("Wait for the graceful shutdown to complete.")
 	<-done
 	log.Println("Graceful shutdown complete.")
 }

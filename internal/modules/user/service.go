@@ -9,12 +9,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// type CreateUserInput struct {
-// 	Name     string
-// 	LastName string
-// 	Password string
-// }
-
 type UserService struct {
 	userRepo *UserRepository
 }
@@ -29,7 +23,6 @@ func NewUserService(userRepository *UserRepository) *UserService {
 	}
 }
 
-// all these parameters are types
 func (u *UserService) CreateUser(ctx context.Context, name, lastName, email, passsword string) (*models.User, error) {
 
 	passwordHash, err := u.hashPassword(passsword)
@@ -49,6 +42,15 @@ func (u *UserService) CreateUser(ctx context.Context, name, lastName, email, pas
 	return user, nil
 }
 
+func (s *UserService) GetByEmail(ctx context.Context,
+	email string) (*models.User, error) {
+	user, err := s.userRepo.GetByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
 func (s *UserService) GetById(ctx context.Context, id int) (*models.User, error) {
 	user, err := s.userRepo.FindById(ctx, id)
 	if err != nil {
@@ -64,6 +66,7 @@ func (s *UserService) DeleteById(ctx context.Context, id int) error {
 func (s *UserService) SoftDelete(ctx context.Context, id int) error {
 	return s.userRepo.SoftDeleteById(ctx, id)
 }
+
 func (s *UserService) FindAll(ctx context.Context) ([]models.User, error) {
 	users, err := s.userRepo.FindAll(ctx)
 	if err != nil {
@@ -79,12 +82,4 @@ func (s *UserService) hashPassword(password string) (string, error) {
 		return "", fmt.Errorf("Failed to generate hashed password: %w", err)
 	}
 	return string(bytes), nil
-}
-
-func (s *UserService) checkPassword(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	if err != nil {
-		return false
-	}
-	return true
 }

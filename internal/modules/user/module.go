@@ -47,7 +47,7 @@ func NewModule(params ModuleParams) *Module {
 
 func (m *Module) RegisterRoutes(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
-		r.Get("/all", m.userHandler.FindAll)
+		r.Get("/all", m.userHandler.GetAll)
 
 		r.Group(func(r chi.Router) {
 			r.Use(m.authMiddleware)

@@ -21,7 +21,7 @@ type Server struct {
 type Params struct {
 	Application *app.Application
 	Database    database.Service
-	// Port        int
+	Port        int
 }
 
 func NewServer(params Params) *http.Server {

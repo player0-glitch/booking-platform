@@ -53,7 +53,7 @@ func New() (Service, error) {
 	dbOnce.Do(func() {
 
 		db, err := gorm.Open(
-			sqlite.Open(dburl), &gorm.Config{})
+			sqlite.Open(dburl+"?_foreign_keys=on"), &gorm.Config{})
 
 		if err != nil {
 			// This will not be a connection error, but a DSN parse error or
@@ -63,7 +63,6 @@ func New() (Service, error) {
 		}
 
 		//ping db to make sure it is connected once.
-		//I think this is to ensure that al
 		sqlDB, err := db.DB()
 		if err != nil {
 			initError = err

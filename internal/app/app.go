@@ -1,11 +1,20 @@
+// @title		Booking Platform Service
+// @version		0.1
+// @description	This is a backend service for a booking platform(not like Booking.com)
+// @host		localhost:8080
+// @BasePath	/
 package app
 
 import (
 	"context"
 	"fmt"
 
+	//unused import for swag AST to include these packages
+	_ "booking-platform/docs/swagger"
+
 	chi "github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 type Module interface {
@@ -27,15 +36,20 @@ type Application struct {
 
 func NewApplication(modules ...Module) (*Application, error) {
 	//Creating our 'root' application router
-	baseRouter := chi.NewRouter()
+	r := chi.NewRouter()
+
 	//Logger needs to come first before any other middleware that can modify requests
-	baseRouter.Use(middleware.Logger)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
 	//Recoverer recovers from panics,logs the panic (with the backtrace),
 	// then returns HTTP 500 status
-	baseRouter.Use(middleware.Recoverer)
-
+	r.Use(middleware.Recoverer)
+	//Swagger UI dashboard
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8080/swagger/doc.json"),
+	))
 	app := &Application{
-		Router: baseRouter,
+		Router: r,
 	}
 	//Modules are initialised here
 	for _, module := range modules {
@@ -44,7 +58,6 @@ func NewApplication(modules ...Module) (*Application, error) {
 			return nil, err
 		}
 	}
-
 	return app, nil
 }
 

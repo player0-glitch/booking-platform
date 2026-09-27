@@ -1,0 +1,63 @@
+basePath: /
+definitions:
+  auth.loginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  auth.loginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  user.ErrorResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is a backend service for a booking platform(not like Booking.com)
+  title: Booking Platform Service
+  version: "0.1"
+paths:
+  /auth/login:
+    post:
+      description: Logs in a user, adds them to a 2hr session and return jwt
+      parameters:
+      - description: Credentials Used For Logging In
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.loginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.loginResponse'
+      summary: Login and return jwt
+      tags:
+      - auth
+  /users/all:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/user.ErrorResponse'
+      summary: Retrieve All Users
+      tags:
+      - users
+swagger: "2.0"

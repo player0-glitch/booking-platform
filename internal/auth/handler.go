@@ -8,24 +8,35 @@ import (
 )
 
 type AuthHandler struct {
-	service authenticator
-	store   storeManager
+	service *AuthService
+	store   *StoreManager
 }
 
-func NewAuthHandler(service authenticator, store storeManager) *AuthHandler {
+func NewAuthHandler(service *AuthService, store *StoreManager) *AuthHandler {
 	return &AuthHandler{
 		service: service,
 		store:   store,
 	}
 }
 
-type loginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+/*
+This is how to define parameters for an api endpoint
+@Param <name of the parameter> <location in the request> <type> <required?>
+<description for swagger ui>
+*/
 
+// Login godoc
+//
+// @Summary			Login and return jwt
+// @Description		Logs in a user, adds them to a 2hr session and return jwt
+// @Tags			auth
+// @Param request body loginRequest true "Credentials Used For Logging In"
+// @Produce			json
+// @Success			200 {object} loginResponse
+// Failure			400 {object} ErrorResponse
+// Failure			401 {object} ErrorResponse
+// @Router			/auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	//parse the request
 	var req loginRequest
 	errJsonDecoder := json.NewDecoder(r.Body).Decode(&req)
 
@@ -33,7 +44,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		response.Error(w, http.StatusBadGateway, "invalid login request body")
 		return
 	}
-	token, err := h.service.Authenticate(req.Email, req.Password)
+	token, err := h.service.Authenticate(r.Context(), req.Email, req.Password)
 
 	if err != nil {
 		http.Error(w, "Invalid Token On Login", http.StatusUnauthorized)
@@ -47,7 +58,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK, map[string]string{"message": "Logged In Successfully"})
+	response.JSON(w, http.StatusOK,
+		map[string]string{"token": token})
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {

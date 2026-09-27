@@ -1,10 +1,22 @@
 package auth
 
 import (
+	core "booking-platform/internal/core/contracts"
+	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+)
+
+type role string
+
+const (
+	RoleGuest role = "Guest"
+	RoleAdmin role = "Admin"
+	RoleUser  role = "User"
 )
 
 var (
@@ -13,36 +25,50 @@ var (
 )
 
 type Claims struct {
-	UserId string `json:"user_id"`
-	Email  string `json:"email"`
+	UserId string      `json:"user_id"`
+	Email  string      `json:"email"`
+	Roles  []core.Role `json:"roles"`
 	jwt.RegisteredClaims
 }
 
 type AuthService struct {
-	jwtSecret []byte
+	jwtSecret  []byte
+	userReader core.UserReader
 }
 
-func NewAuthService(jwtSecret []byte) *AuthService {
+func NewAuthService(userReader core.UserReader, jwtSecret []byte) *AuthService {
 	return &AuthService{
-		jwtSecret: jwtSecret,
+		jwtSecret:  jwtSecret,
+		userReader: userReader,
 	}
 }
 
-func (s *AuthService) Authenticate(email, password string) (string, error) {
-	// figure out how to actually check the passowrd
-	if email != "user@example.co.za" || password != "MyStrongPass123" {
+func (s *AuthService) Authenticate(ctx context.Context, email, password string) (string, error) {
+	user, err := s.userReader.GetByEmailWithRoles(ctx, email)
+	//could not get the user based on email
+	// put the error message in the string returned
+	if err != nil {
+		return "invalid email, no database match", err
+	}
+
+	if email != user.Email ||
+		!s.checkPassword(password, user.PasswordHash) {
 		return "", ErrInvalidCredentials
 	}
-
+	//Query DB to get the role from the user.roleId to see what role this
+	//user has
 	claims := Claims{
-		UserId: "user_123",
+		UserId: strconv.Itoa(user.Id),
 		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
+		Roles: user.Roles,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	//after validating token,add the user to the context for authorization
+
 	return token.SignedString(s.jwtSecret)
 }
 
@@ -63,4 +89,12 @@ func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
 		return nil, ErrInvalidToken
 	}
 	return claims, nil
+}
+
+func (s *AuthService) checkPassword(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	if err != nil {
+		return false
+	}
+	return true
 }

@@ -20,13 +20,6 @@ func NewUserController(userSvc *UserService) *UserController {
 	}
 }
 
-type createUserRequest struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
-	Email     string `json:"email"`
-	Password  string `json:"password"`
-}
-
 func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	var req createUserRequest
 	//parse the json request
@@ -45,7 +38,15 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	response.JSON(w, http.StatusCreated, &user)
 }
 
-func (c *UserController) FindAll(w http.ResponseWriter, r *http.Request) {
+// User godoc
+// @Security	BearerAuth
+// @Summary		Retrieve All Users
+// @Tags		users
+// @Produce		json
+// @Success 	200
+// @Failure		403 {object} ErrorResponse
+// @Router		/users/all	[get]
+func (c *UserController) GetAll(w http.ResponseWriter, r *http.Request) {
 	users, err := c.userService.FindAll(r.Context())
 	if err != nil {
 		response.Error(w, http.StatusInternalServerError, "Server Failed To Get All Users")
@@ -56,7 +57,7 @@ func (c *UserController) FindAll(w http.ResponseWriter, r *http.Request) {
 		response.JSON(w, http.StatusNotFound, "No Users")
 		return
 	}
-	response.JSON(w, http.StatusFound, users)
+	response.JSON(w, http.StatusOK, users)
 }
 func (c *UserController) GetById(w http.ResponseWriter, r *http.Request) {
 

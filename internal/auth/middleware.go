@@ -6,8 +6,7 @@ import (
 	"net/http"
 )
 
-type contextKey string
-
+// contextKey defined in context.go in this package
 const UserContextKey contextKey = "user_claims"
 
 func (m *Module) AuthMiddlware(next http.Handler) http.Handler {
