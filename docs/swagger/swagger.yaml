@@ -12,12 +12,37 @@ definitions:
       token:
         type: string
     type: object
-  user.ErrorResponse:
+  user.createUserRequest:
     properties:
-      message:
+      email:
         type: string
-      status:
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+    type: object
+  user.rolesRequest:
+    properties:
+      id:
         type: integer
+      role_name:
+        example: Admin
+        type: string
+    type: object
+  user.userRequest:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      roles:
+        items:
+          $ref: '#/definitions/user.rolesRequest'
+        type: array
     type: object
 host: localhost:8080
 info:
@@ -46,6 +71,108 @@ paths:
       summary: Login and return jwt
       tags:
       - auth
+  /auth/logout:
+    post:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "500":
+          description: Internal Server Error
+      summary: Logout and invalidate session and token
+      tags:
+      - auth
+  /users:
+    post:
+      parameters:
+      - description: User Object type
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "403":
+          description: Forbidden
+      summary: Create A New User
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      parameters:
+      - description: User Id
+        in: path
+        name: request
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.userRequest'
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+      security:
+      - BearerAuth: []
+      summary: Delete user by id
+      tags:
+      - users
+    get:
+      parameters:
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/user.userRequest'
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+      security:
+      - BearerAuth: []
+      summary: Retrieve user by id
+      tags:
+      - users
+  /users/{id}/soft:
+    delete:
+      parameters:
+      - description: User Id
+        in: path
+        name: request
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/user.userRequest'
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+      security:
+      - BearerAuth: []
+      summary: Solf delete user by id
+      tags:
+      - users
   /users/all:
     get:
       produces:
@@ -55,9 +182,13 @@ paths:
           description: OK
         "403":
           description: Forbidden
-          schema:
-            $ref: '#/definitions/user.ErrorResponse'
       summary: Retrieve All Users
       tags:
       - users
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter your JWT as: Bearer <token>'
+    in: header
+    name: Authorization Token
+    type: apiKey
 swagger: "2.0"

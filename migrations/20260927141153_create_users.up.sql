@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     role_id INTEGER NOT NULL DEFAULT 2, -- Default to a 'User' role
-    deleted_at DATETIME NULL,
+    deleted_at DATETIME DEFAULT NULL,
     --Foreign Key Constraints
     FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE RESTRICT
 );
