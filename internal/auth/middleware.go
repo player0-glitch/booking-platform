@@ -22,6 +22,7 @@ func (m *Module) AuthMiddlware(next http.Handler) http.Handler {
 			http.Error(w, "Unauthorised: No Valid Token Or It Expired", http.StatusUnauthorized)
 			return
 		}
+
 		ctx := context.WithValue(r.Context(), UserContextKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

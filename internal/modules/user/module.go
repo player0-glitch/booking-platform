@@ -1,6 +1,8 @@
 package user
 
 import (
+	"booking-platform/internal/auth"
+	"booking-platform/internal/core"
 	"net/http"
 
 	chi "github.com/go-chi/chi/v5"
@@ -48,15 +50,22 @@ func NewModule(params ModuleParams) *Module {
 func (m *Module) RegisterRoutes(r chi.Router) {
 	r.Route("/users", func(r chi.Router) {
 		r.Get("/all", m.userHandler.GetAll)
-
+		r.Post("/", m.userHandler.Create)
 		r.Group(func(r chi.Router) {
 			r.Use(m.authMiddleware)
-
-			r.Post("/", m.userHandler.Create)
+			//Define the roles required by these routes
+			r.Use(auth.RequiredRoles(
+				core.RoleAdmin,
+				core.RoleUser))
 			r.Get("/{id}", m.userHandler.GetById)
+
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(auth.RequiredRoles(core.RoleAdmin))
+			// r.Post("/", m.userHandler.Create)
 			r.Delete("/{id}", m.userHandler.DeleteById)
 			r.Delete("/{id}/soft", m.userHandler.SoftDeleteById)
 		})
-
 	})
 }

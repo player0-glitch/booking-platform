@@ -1,16 +1,17 @@
 package auth
 
 import (
-	core "booking-platform/internal/core/contracts"
-
 	chi "github.com/go-chi/chi/v5"
 )
 
 type Module struct {
-	// session sessions.Session
 	service *AuthService
 	store   *StoreManager
 	handler *AuthHandler
+}
+type ModuleParams struct {
+	JwtSecret   string
+	AuthService *AuthService
 }
 
 // Contracts/Interfaces owned by the consumers
@@ -19,16 +20,13 @@ func (m *Module) Name() string {
 	return "auth module"
 }
 
-func NewModule(jwtSecret string) *Module {
-	jwtBytes := []byte(jwtSecret)
+func NewModule(params ModuleParams) *Module {
 	//AuthService implements Authenticate that authenticator uses
-	srv := NewAuthService(core.UserReader, jwtBytes)
-	store := NewStoreManager(jwtBytes, "app_session")
+	store := NewStoreManager([]byte(params.JwtSecret), "app_session")
 	return &Module{
-		// session: s,
-		service: srv,
+		service: params.AuthService,
 		store:   store,
-		handler: NewAuthHandler(srv, store),
+		handler: NewAuthHandler(params.AuthService, store),
 	}
 }
 

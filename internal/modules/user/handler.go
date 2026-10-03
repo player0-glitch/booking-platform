@@ -1,11 +1,12 @@
 package user
 
 import (
-	response "booking-platform/internal/core"
-	"encoding/json"
+	json "booking-platform/internal/json"
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"errors"
 
 	chi "github.com/go-chi/chi/v5"
 )
@@ -20,85 +21,123 @@ func NewUserController(userSvc *UserService) *UserController {
 	}
 }
 
+// User godoc
+// @Summary		Create A New User
+// @Tags		users
+// @Param request body createUserRequest true  "User Object type"
+// @Produce		json
+// @Success 	201
+// @Failure		403
+// @Router		/users	[post]
 func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 	var req createUserRequest
 	//parse the json request
-	errJsonDecoder = json.NewDecoder(r.Body).Decode(&req)
+	errJsonDecoder = json.Reader(r, &req)
 
 	if errJsonDecoder != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request body")
+		json.RequestErrorHandler(w, errJsonDecoder)
 		return
 	}
 	user, errSvc := c.userService.CreateUser(r.Context(), req.FirstName, req.LastName, req.Email, req.Password)
 
 	if errSvc != nil {
-		response.Error(w, http.StatusInternalServerError, "Failed To Create User")
+		json.InternalErrorHandler(w, errors.New("Failed To Create User"))
 		return
 	}
-	response.JSON(w, http.StatusCreated, &user)
+	json.Write(w, http.StatusCreated, &user)
 }
 
 // User godoc
-// @Security	BearerAuth
 // @Summary		Retrieve All Users
 // @Tags		users
 // @Produce		json
 // @Success 	200
-// @Failure		403 {object} ErrorResponse
+// @Failure		403
 // @Router		/users/all	[get]
 func (c *UserController) GetAll(w http.ResponseWriter, r *http.Request) {
 	users, err := c.userService.FindAll(r.Context())
 	if err != nil {
-		response.Error(w, http.StatusInternalServerError, "Server Failed To Get All Users")
+		json.RequestErrorHandler(w, errors.New("Server Failed To Get All Users"))
 		return
 	}
 
 	if len(users) == 0 {
-		response.JSON(w, http.StatusNotFound, "No Users")
+		json.Write(w, http.StatusNotFound, "No Users")
 		return
 	}
-	response.JSON(w, http.StatusOK, users)
+	json.Write(w, http.StatusOK, users)
 }
+
+// User godoc
+// @Security	BearerAuth
+// @Summary		Retrieve user by id
+// @Tags		users
+// @Param id path int true "User Id"
+// @Produce		json
+// @Success 	202	{object} userRequest
+// @Failure		403
+// @Failure		404
+// @Router		/users/{id}	[get]
 func (c *UserController) GetById(w http.ResponseWriter, r *http.Request) {
 
 	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
 	if errParse != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
+		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	user, errSvc := c.userService.GetById(r.Context(), id)
+	user, errSvc := c.userService.GetById(r.Context(), uint(id))
 	if errSvc != nil {
-		response.Error(w, http.StatusNotFound, fmt.Sprintf("User with id=%d not found", id))
+		json.WriteError(w, http.StatusNotFound, fmt.Sprintf("User with id=%d not found", id))
 		return
 	}
 
-	response.JSON(w, http.StatusFound, user)
+	json.Write(w, http.StatusAccepted, user)
 }
 
+// User godoc
+// @Security	BearerAuth
+// @Summary		Delete user by id
+// @Tags		users
+// @Param request path int true "User Id"
+// @Produce		json
+// @Success 	200	{object} userRequest
+// @Failure		403
+// @Failure 	404
+// @Router		/users/{id}	[delete]
 func (c *UserController) DeleteById(w http.ResponseWriter, r *http.Request) {
 	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
 	if errParse != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
+		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	err := c.userService.DeleteById(r.Context(), id)
+	err := c.userService.DeleteById(r.Context(), uint(id))
 	if err != nil {
-		response.Error(w, http.StatusNotFound, "User Not found")
+		json.WriteError(w, http.StatusNotFound, "User Not found")
 		return
 	}
-	response.JSON(w, http.StatusAccepted, "User Deleted")
+	json.Write(w, http.StatusAccepted, "User Deleted")
 }
 
+// User godoc
+// @Security	BearerAuth
+// @Summary		Solf delete user by id
+// @Tags		users
+// @Param request path int true "User Id"
+// @Produce		json
+// @Success 	200	{object} userRequest
+// @Failure		403
+// @Failure 	404
+// @Router		/users/{id}/soft	[delete]
 func (c *UserController) SoftDeleteById(w http.ResponseWriter, r *http.Request) {
 	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
 	if errParse != nil {
-		response.Error(w, http.StatusBadRequest, "invalid request, Check user id")
+		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	err := c.userService.SoftDelete(r.Context(), id)
+	err := c.userService.SoftDelete(r.Context(), uint(id))
 	if err != nil {
-		response.Error(w, http.StatusNotFound, "User Not found")
+		json.WriteError(w, http.StatusNotFound, "User Not found")
 		return
 	}
-	response.JSON(w, http.StatusAccepted, "User Deleted Softly")
+	json.Write(w, http.StatusAccepted, "User Deleted Softly")
 }

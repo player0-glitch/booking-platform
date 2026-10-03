@@ -1,7 +1,6 @@
 package user
 
 import (
-	"booking-platform/internal/modules/user/models"
 	"context"
 	"errors"
 	"fmt"
@@ -9,13 +8,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserService struct {
-	userRepo *UserRepository
-}
-
 var (
 	ErrUserNotFound = errors.New("User Not Found")
 )
+
+type UserService struct {
+	userRepo *UserRepository
+}
 
 func NewUserService(userRepository *UserRepository) *UserService {
 	return &UserService{
@@ -23,13 +22,13 @@ func NewUserService(userRepository *UserRepository) *UserService {
 	}
 }
 
-func (u *UserService) CreateUser(ctx context.Context, name, lastName, email, passsword string) (*models.User, error) {
+func (u *UserService) CreateUser(ctx context.Context, name, lastName, email, passsword string) (*userRequest, error) {
 
 	passwordHash, err := u.hashPassword(passsword)
 	if err != nil {
 		return nil, fmt.Errorf("Password hashing failed: %w", err)
 	}
-	user := &models.User{
+	user := &User{
 		Email:        email,
 		FirstName:    name,
 		LastName:     lastName,
@@ -39,11 +38,11 @@ func (u *UserService) CreateUser(ctx context.Context, name, lastName, email, pas
 	if notFoundError != nil {
 		return nil, notFoundError
 	}
-	return user, nil
+	return newUserRequest(user), nil
 }
 
 func (s *UserService) GetByEmail(ctx context.Context,
-	email string) (*models.User, error) {
+	email string) (*User, error) {
 	user, err := s.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -51,28 +50,32 @@ func (s *UserService) GetByEmail(ctx context.Context,
 	return user, nil
 }
 
-func (s *UserService) GetById(ctx context.Context, id int) (*models.User, error) {
+func (s *UserService) GetById(ctx context.Context, id uint) (*userRequest, error) {
 	user, err := s.userRepo.FindById(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
+	return newUserRequest(user), nil
 }
 
-func (s *UserService) DeleteById(ctx context.Context, id int) error {
+func (s *UserService) DeleteById(ctx context.Context, id uint) error {
 	return s.userRepo.DeleteById(ctx, id)
 }
 
-func (s *UserService) SoftDelete(ctx context.Context, id int) error {
+func (s *UserService) SoftDelete(ctx context.Context, id uint) error {
 	return s.userRepo.SoftDeleteById(ctx, id)
 }
 
-func (s *UserService) FindAll(ctx context.Context) ([]models.User, error) {
+func (s *UserService) FindAll(ctx context.Context) ([]userRequest, error) {
 	users, err := s.userRepo.FindAll(ctx)
 	if err != nil {
-		return []models.User{}, err
+		return []userRequest{}, err
 	}
-	return users, nil
+	reqs := make([]userRequest, 0, len(users))
+	for i, u := range users {
+		reqs[i] = *newUserRequest(&u)
+	}
+	return reqs, nil
 }
 
 func (s *UserService) hashPassword(password string) (string, error) {

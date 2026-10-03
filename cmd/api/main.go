@@ -1,6 +1,12 @@
 package main
 
 import (
+	"booking-platform/internal/app"
+	"booking-platform/internal/auth"
+	"booking-platform/internal/core/adapters"
+	"booking-platform/internal/database"
+	"booking-platform/internal/modules/user"
+	"booking-platform/internal/server"
 	"context"
 	"fmt"
 	"log"
@@ -10,11 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"booking-platform/internal/app"
-	"booking-platform/internal/auth"
-	"booking-platform/internal/database"
-	"booking-platform/internal/modules/user"
-	"booking-platform/internal/server"
+	logger "github.com/sirupsen/logrus"
 )
 
 func gracefulShutdown(apiServer *http.Server, application *app.Application, done chan<- bool) {
@@ -46,6 +48,8 @@ func gracefulShutdown(apiServer *http.Server, application *app.Application, done
 }
 
 func main() {
+	//A global logger for debugging so we can se what file and line made the log
+	logger.SetReportCaller(true)
 	//init database
 	databaseContext, err := database.New()
 	if err != nil {
@@ -55,20 +59,24 @@ func main() {
 	defer func() {
 		err := databaseContext.Close()
 		if err != nil {
-			fmt.Printf("Failed To Close Database Connection: %v", err)
+			logger.Printf("Failed To Close Database Connection: %v", err)
 		}
 	}()
-
+	jwtSecret := os.Getenv("SESSION_STORE_KEY")
 	//Initialise the modularized application
 	fmt.Println("Registering Modules")
-	authModule := auth.NewModule(os.Getenv("SESSION_STORE_KEY"))
+	authModule := auth.NewModule(auth.ModuleParams{
+		JwtSecret:   jwtSecret,
+		AuthService: fulfillAuthUserContract(jwtSecret, databaseContext),
+	})
 	userModule := user.NewModule(user.ModuleParams{
 		DB:             databaseContext.DB(),
 		AuthMiddleware: authModule.AuthMiddlware,
 	})
 
 	app, errAppStart := app.NewApplication(
-		authModule, userModule,
+		authModule,
+		userModule,
 	)
 	if errAppStart != nil {
 		log.Fatalf("%s", errAppStart.Error())
@@ -90,10 +98,26 @@ func main() {
 	go gracefulShutdown(server, app, done)
 
 	fmt.Println("Starting Server ....")
+	fmt.Println(`
+   ______     ______        ______     ______   __    
+  /\  ___\   /\  __ \      /\  __ \   /\  == \ /\ \   
+  \ \ \__ \  \ \ \/\ \     \ \  __ \  \ \  _-/ \ \ \  
+   \ \_____\  \ \_____\     \ \_\ \_\  \ \_\    \ \_\ 
+  	\/_____/   \/_____/      \/_/\/_/   \/_/     \/_/ `)
 	if err := server.ListenAndServe(); err != nil &&
 		err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
 	}
 	<-done
 	log.Println("Graceful shutdown complete.")
+}
+
+// Find a better way to bind these contracts
+// Fullfil the contract that the Auth & User module agree on.
+// Auth module wants a UserReader with GetByEmailWithRoles and defines the contract
+// UserRepository implements the interface/contract
+func fulfillAuthUserContract(jwtSecret string, db database.Service) *auth.AuthService {
+	userRepo := user.NewUserRepo(db.DB())
+	userReader := adapters.NewUserAdapter(userRepo)
+	return auth.NewAuthService(userReader, []byte(jwtSecret))
 }

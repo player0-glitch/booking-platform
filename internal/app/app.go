@@ -3,6 +3,11 @@
 // @description	This is a backend service for a booking platform(not like Booking.com)
 // @host		localhost:8080
 // @BasePath	/
+//
+// @securityDefinitions.apiKey BearerAuth
+// @in header
+// @name Authorization Token
+// @description Enter your JWT as: Bearer <token>
 package app
 
 import (
@@ -39,6 +44,7 @@ func NewApplication(modules ...Module) (*Application, error) {
 	r := chi.NewRouter()
 
 	//Logger needs to come first before any other middleware that can modify requests
+	r.Use(middleware.StripSlashes)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	//Recoverer recovers from panics,logs the panic (with the backtrace),

@@ -2,8 +2,7 @@
 package auth
 
 import (
-	response "booking-platform/internal/core"
-	"encoding/json"
+	json "booking-platform/internal/json"
 	"net/http"
 )
 
@@ -38,12 +37,13 @@ This is how to define parameters for an api endpoint
 // @Router			/auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
-	errJsonDecoder := json.NewDecoder(r.Body).Decode(&req)
+	errJsonDecoder := json.Reader(r, req)
 
 	if errJsonDecoder != nil {
-		response.Error(w, http.StatusBadGateway, "invalid login request body")
+		json.RequestErrorHandler(w, errJsonDecoder)
 		return
 	}
+
 	token, err := h.service.Authenticate(r.Context(), req.Email, req.Password)
 
 	if err != nil {
@@ -58,14 +58,21 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response.JSON(w, http.StatusOK,
+	json.Write(w, http.StatusOK,
 		map[string]string{"token": token})
 }
 
+// Logout godoc
+// @Summary		Logout and invalidate session and token
+// @Tags		auth
+// @Produce		json
+// @Success 	200
+// @Failure 	500
+// @Router /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if err := h.store.Clear(w, r); err != nil {
 		http.Error(w, "Failed To Clear Session", http.StatusInternalServerError)
 		return
 	}
-	response.JSON(w, http.StatusOK, map[string]string{"message": "Logged Out Successfully"})
+	json.Write(w, http.StatusOK, map[string]string{"message": "Logged Out Successfully"})
 }
