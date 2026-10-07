@@ -1,5 +1,9 @@
 package user
 
+import (
+	Logger "github.com/sirupsen/logrus"
+)
+
 type createUserRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -9,7 +13,7 @@ type createUserRequest struct {
 
 type rolesRequest struct {
 	Id       uint   `json:"id"`
-	RoleName string `json:"role_name" example:"Admin"`
+	RoleName string `json:"role_name"`
 }
 
 type userRequest struct {
@@ -19,7 +23,7 @@ type userRequest struct {
 	Roles     []rolesRequest `json:"roles"`
 }
 
-func newUserRequest(u *User) *userRequest {
+func newUserRequest(u *User) userRequest {
 	roles := make([]rolesRequest, len(u.Roles))
 
 	for i, role := range u.Roles {
@@ -28,7 +32,8 @@ func newUserRequest(u *User) *userRequest {
 			RoleName: role.RoleName,
 		}
 	}
-	return &userRequest{
+	Logger.Debugf("Roles Assigned To User: %+v", roles)
+	return userRequest{
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Email:     u.Email,

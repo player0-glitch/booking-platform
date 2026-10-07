@@ -13,7 +13,7 @@ type Middleware func(http.Handler) http.Handler
 
 // Module Structure it self
 type Module struct {
-	userService *UserService
+	userService IUserService
 	// Controllers Controllers
 	userHandler    *UserController
 	authMiddleware Middleware
@@ -34,8 +34,10 @@ type ModuleParams struct {
 func NewModule(params ModuleParams) *Module {
 	//register repos
 	userRepo := NewUserRepo(params.DB)
-	//register services
-	userService := NewUserService(userRepo)
+	rolesRepo := newRolesRepo(params.DB)
+	//register services. Our service takes in a hard copy
+	//for sustainablility. Just point to the Implementation of choice
+	userService := NewUserService(*userRepo, rolesRepo)
 	//Controller Handler Same thing
 	userHandler := NewUserController(userService)
 

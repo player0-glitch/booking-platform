@@ -7,11 +7,6 @@ definitions:
       password:
         type: string
     type: object
-  auth.loginResponse:
-    properties:
-      token:
-        type: string
-    type: object
   user.createUserRequest:
     properties:
       email:
@@ -67,7 +62,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/auth.loginResponse'
+            $ref: '#/definitions/auth.loginRequest'
       summary: Login and return jwt
       tags:
       - auth
@@ -189,6 +184,6 @@ securityDefinitions:
   BearerAuth:
     description: 'Enter your JWT as: Bearer <token>'
     in: header
-    name: Authorization Token
+    name: Authorization
     type: apiKey
 swagger: "2.0"

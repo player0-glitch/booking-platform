@@ -2,7 +2,7 @@
 package auth
 
 import (
-	json "booking-platform/internal/json"
+	jsonApi "booking-platform/internal/json"
 	"net/http"
 )
 
@@ -21,6 +21,11 @@ func NewAuthHandler(service *AuthService, store *StoreManager) *AuthHandler {
 /*
 This is how to define parameters for an api endpoint
 @Param <name of the parameter> <location in the request> <type> <required?>
+{
+  "status": 400,
+  "message": "json: Unmarshal(non-pointer auth.loginRequest)"
+}
+
 <description for swagger ui>
 */
 
@@ -31,16 +36,16 @@ This is how to define parameters for an api endpoint
 // @Tags			auth
 // @Param request body loginRequest true "Credentials Used For Logging In"
 // @Produce			json
-// @Success			200 {object} loginResponse
+// @Success			200 {object} loginRequest
 // Failure			400 {object} ErrorResponse
 // Failure			401 {object} ErrorResponse
 // @Router			/auth/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
-	errJsonDecoder := json.Reader(r, req)
+	errJsonDecoder := jsonApi.Reader(r, &req)
 
 	if errJsonDecoder != nil {
-		json.RequestErrorHandler(w, errJsonDecoder)
+		jsonApi.RequestErrorHandler(w, errJsonDecoder)
 		return
 	}
 
@@ -58,7 +63,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.Write(w, http.StatusOK,
+	jsonApi.Write(w, http.StatusOK,
 		map[string]string{"token": token})
 }
 
@@ -74,5 +79,5 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Failed To Clear Session", http.StatusInternalServerError)
 		return
 	}
-	json.Write(w, http.StatusOK, map[string]string{"message": "Logged Out Successfully"})
+	jsonApi.Write(w, http.StatusOK, map[string]string{"message": "Logged Out Successfully"})
 }

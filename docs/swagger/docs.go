@@ -40,7 +40,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.loginResponse"
+                            "$ref": "#/definitions/auth.loginRequest"
                         }
                     }
                 }
@@ -242,14 +242,6 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.loginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
         "user.createUserRequest": {
             "type": "object",
             "properties": {
@@ -304,7 +296,7 @@ const docTemplate = `{
         "BearerAuth": {
             "description": "Enter your JWT as: Bearer \u003ctoken\u003e",
             "type": "apiKey",
-            "name": "Authorization Token",
+            "name": "Authorization",
             "in": "header"
         }
     }

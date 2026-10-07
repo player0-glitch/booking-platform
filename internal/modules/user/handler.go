@@ -12,10 +12,10 @@ import (
 )
 
 type UserController struct {
-	userService *UserService
+	userService IUserService
 }
 
-func NewUserController(userSvc *UserService) *UserController {
+func NewUserController(userSvc IUserService) *UserController {
 	return &UserController{
 		userService: userSvc,
 	}
@@ -140,4 +140,11 @@ func (c *UserController) SoftDeleteById(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	json.Write(w, http.StatusAccepted, "User Deleted Softly")
+}
+
+func (c *UserController) ChangeUserRole(w http.ResponseWriter, r *http.Request) {
+
+}
+func (c *UserController) RevokeRole(w http.ResponseWriter, r *http.Request) {
+
 }

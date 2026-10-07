@@ -1,6 +1,7 @@
 package user
 
 import (
+	"booking-platform/internal/core"
 	"context"
 
 	"gorm.io/gorm"
@@ -18,8 +19,21 @@ func NewUserRepo(dbContext *gorm.DB) *UserRepository {
 	}
 }
 
+// godoc
+// This creates a new user in storage defaulted to a role of User
 func (r *UserRepository) Create(ctx context.Context, user *User) error {
-	return r.dbContext.Create(&user).Error
+	return r.dbContext.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(user).Error; err != nil {
+			return err
+		}
+
+		var defaultRole Role
+		if err := tx.Where("role_name = ?", string(core.RoleUser)).First(&defaultRole).Error; err != nil {
+			return err
+		}
+
+		return tx.Model(user).Association("Roles").Append(&defaultRole)
+	})
 }
 
 func (r *UserRepository) FindById(ctx context.Context, id uint) (*User, error) {
@@ -34,15 +48,14 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*User, error) {
 
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
-	err := r.dbContext.WithContext(ctx).First(&user, email).Error
+	err := r.dbContext.WithContext(ctx).Where("email = ?", email).First(&user).Error
 	if err != nil {
-		return nil, err
 	}
 	return &user, nil
 }
 func (r *UserRepository) GetByEmailWithRoles(ctx context.Context, email string) (*User, error) {
 	var user User
-	err := r.dbContext.WithContext(ctx).Preload("Roles").Where("email = ?").First(&user, email).Error
+	err := r.dbContext.WithContext(ctx).Preload("Roles").Where("email = ?", email).First(&user).Error
 
 	if err != nil {
 		return nil, err

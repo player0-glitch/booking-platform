@@ -34,7 +34,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/auth.loginResponse"
+                            "$ref": "#/definitions/auth.loginRequest"
                         }
                     }
                 }
@@ -236,14 +236,6 @@
                 }
             }
         },
-        "auth.loginResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
         "user.createUserRequest": {
             "type": "object",
             "properties": {
@@ -298,7 +290,7 @@
         "BearerAuth": {
             "description": "Enter your JWT as: Bearer \u003ctoken\u003e",
             "type": "apiKey",
-            "name": "Authorization Token",
+            "name": "Authorization",
             "in": "header"
         }
     }

@@ -6,7 +6,7 @@
 //
 // @securityDefinitions.apiKey BearerAuth
 // @in header
-// @name Authorization Token
+// @name Authorization
 // @description Enter your JWT as: Bearer <token>
 package app
 
