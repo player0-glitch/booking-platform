@@ -1,10 +1,15 @@
 # Setup
 
+# This Still Needs To Be Updated Until the file structure is done
+
+mutating
+
 ### Project dependencies
 
 - Go
 - Asynq
 - GORM
+- Goose
 - Redis
 - sqlite3 (dev)
 - Postgresql (prod)
@@ -85,4 +90,19 @@ mkdir -p \
   storage \
   docs/adr \
   docs/architecture
+```
+
+### Goose, Go Native that allows you to manage database migrations
+
+Install instructions
+
+```bash
+//Linux
+curl -fsSL \
+    https://raw.githubusercontent.com/pressly/goose/master/install.sh |\
+    sh
+//MacOS (Brew)
+brew install goose
+//Windows
+ha lol
 ```

@@ -16,7 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	logger "github.com/sirupsen/logrus"
+	Logger "github.com/sirupsen/logrus"
 )
 
 func gracefulShutdown(apiServer *http.Server, application *app.Application, done chan<- bool) {
@@ -49,7 +49,7 @@ func gracefulShutdown(apiServer *http.Server, application *app.Application, done
 
 func main() {
 	//A global logger for debugging so we can se what file and line made the log
-	logger.SetReportCaller(true)
+	Logger.SetReportCaller(true)
 	//init database
 	databaseContext, err := database.New()
 	if err != nil {
@@ -59,7 +59,7 @@ func main() {
 	defer func() {
 		err := databaseContext.Close()
 		if err != nil {
-			logger.Printf("Failed To Close Database Connection: %v", err)
+			Logger.Printf("Failed To Close Database Connection: %v", err)
 		}
 	}()
 	jwtSecret := os.Getenv("SESSION_STORE_KEY")
@@ -103,7 +103,7 @@ func main() {
   /\  ___\   /\  __ \      /\  __ \   /\  == \ /\ \   
   \ \ \__ \  \ \ \/\ \     \ \  __ \  \ \  _-/ \ \ \  
    \ \_____\  \ \_____\     \ \_\ \_\  \ \_\    \ \_\ 
-  	\/_____/   \/_____/      \/_/\/_/   \/_/     \/_/ `)
+    \/_____/   \/_____/      \/_/\/_/   \/_/     \/_/ `)
 	if err := server.ListenAndServe(); err != nil &&
 		err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))

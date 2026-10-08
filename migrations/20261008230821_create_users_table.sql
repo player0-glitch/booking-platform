@@ -1,3 +1,4 @@
+-- +goose Up
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     first_name VARCHAR(100) NOT NULL,
@@ -16,5 +17,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE deleted_
 -- Create index for deleted_at for gorm:index
 CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users(deleted_at);
 
--- Create index for role_id for gorm:index
--- CREATE INDEX idx_users_role_id ON users(role_id);
+INSERT OR IGNORE INTO users (id,first_name,last_name,email,role_id) VALUES
+(1,'Admin','User','admin@example.com',1);
+-- +goose Down
+DROP INDEX IF EXISTS idx_users_email;
+DROP INDEX IF EXISTS idx_users_deleted_at;
+DROP TABLE IF EXISTS users;
