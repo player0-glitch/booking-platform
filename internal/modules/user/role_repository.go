@@ -18,7 +18,7 @@ func newRolesRepo(dbContext *gorm.DB) *rolesRepo {
 func (r *rolesRepo) ChangeUserRole(ctx context.Context, user *User, role *Role) error {
 	roles := make([]Role, 0, 1)
 	//for now each user only has 1 role
-	roles[0] = Role{RoleName: role.RoleName, Model: role.Model}
+	roles[0] = Role{RoleName: role.RoleName, Id: role.Id}
 	return r.dbContext.Model(user).WithContext(ctx).Association("Roles").Replace(roles)
 }
 

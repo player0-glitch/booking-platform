@@ -23,14 +23,14 @@ func (a *UserAdapter) GetByEmailWithRoles(ctx context.Context, email string) (*a
 	}
 
 	authUser := &auth.AuthUser{
-		Id:           userModel.ID,
+		Id:           (userModel.Base.ID),
 		Email:        userModel.Email,
 		PasswordHash: userModel.PasswordHash,
 		Roles:        make([]auth.UserRole, 0, len(userModel.Roles)),
 	}
 	for _, role := range userModel.Roles {
 		authUser.Roles = append(authUser.Roles, auth.UserRole{
-			Id:   role.ID,
+			Id:   role.Id,
 			Name: role.RoleName,
 		})
 	}

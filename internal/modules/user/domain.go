@@ -1,13 +1,16 @@
 package user
 
 import (
+	"booking-platform/internal/core"
 	"context"
+	"time"
 
 	"gorm.io/gorm"
 )
 
 type User struct {
-	gorm.Model          //id,created_at,updated_at
+	// gorm.Model          //id,created_at,updated_at
+	core.Base
 	FirstName    string `gorm:"not null"`
 	LastName     string `gorm:"not null"`
 	Email        string `gorm:"uniqueIndex;not null"`
@@ -33,8 +36,11 @@ type User struct {
     }
 */
 type Role struct {
-	gorm.Model        //makes id,created_at,updated_at and deleted_at
-	RoleName   string `gorm:"unique;not null" json:"role_name"`
+	Id        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	// core.Base
+	RoleName string `gorm:"unique;not null" json:"role_name"`
 }
 
 type RolesRepository interface {

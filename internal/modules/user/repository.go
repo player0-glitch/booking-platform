@@ -20,7 +20,7 @@ func NewUserRepo(dbContext *gorm.DB) *UserRepository {
 }
 
 // godoc
-// This creates a new user in storage defaulted to a role of User
+// This creates a new user in storage defaulted to a role of Customer
 func (r *UserRepository) Create(ctx context.Context, user *User) error {
 	return r.dbContext.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(user).Error; err != nil {
@@ -28,7 +28,7 @@ func (r *UserRepository) Create(ctx context.Context, user *User) error {
 		}
 
 		var defaultRole Role
-		if err := tx.Where("role_name = ?", string(core.RoleUser)).First(&defaultRole).Error; err != nil {
+		if err := tx.Where("role_name = ?", string(core.RoleCustomer)).First(&defaultRole).Error; err != nil {
 			return err
 		}
 

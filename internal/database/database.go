@@ -10,11 +10,8 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-
-	//replace sql* DB with gorm* DB
-	_ "github.com/mattn/go-sqlite3"
 )
 
 // Service represents a service that interacts with a database.
@@ -37,8 +34,11 @@ type service struct {
 }
 
 var (
-	dburl = os.Getenv("DEV_DB_URL")
-	// dbInstance *service
+	// dburl   = os.Getenv("DEV_DB_URL")
+	db_host = getenv("DB_HOST", "localhost")
+	db_user = getenv("DB_USER", "")
+	db_name = getenv("DB_NAME", "go_db")
+	db_port = getenv("DB_PORT", "5432")
 )
 
 // Trying to prevent 2 go routines from both intialising this service
@@ -47,13 +47,27 @@ var (
 	dbOnce     sync.Once
 )
 
+func getenv(key, fallback string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		return fallback
+	}
+	return val
+}
+
 func New() (Service, error) {
 	var initError error
 	// Reuse Connection
 	dbOnce.Do(func() {
 
-		db, err := gorm.Open(
-			sqlite.Open(dburl+"?_foreign_keys=on"), &gorm.Config{})
+		//sslmode should not be disabled in prod
+		dsn := fmt.Sprintf("host=%s user=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
+			db_host,
+			db_user,
+			db_name,
+			db_port)
+
+		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 		if err != nil {
 			// This will not be a connection error, but a DSN parse error or
@@ -154,7 +168,6 @@ func (s *service) Close() error {
 		return err
 	}
 
-	log.Printf("Disconnected from database: %s", dburl)
 	return sqlDB.Close()
 }
 

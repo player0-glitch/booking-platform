@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/google/uuid"
 	Logger "github.com/sirupsen/logrus"
 )
 
@@ -12,11 +13,13 @@ type createUserRequest struct {
 }
 
 type rolesRequest struct {
-	Id       uint   `json:"id"`
+	Id uint `json:"id"`
+	// Id       uuid.UUID
 	RoleName string `json:"role_name"`
 }
 
 type userRequest struct {
+	Id        uuid.UUID      `json:"id"`
 	FirstName string         `json:"first_name"`
 	LastName  string         `json:"last_name"`
 	Email     string         `json:"email"`
@@ -28,7 +31,7 @@ func newUserRequest(u *User) userRequest {
 
 	for i, role := range u.Roles {
 		roles[i] = rolesRequest{
-			Id:       role.Model.ID,
+			Id:       role.Id,
 			RoleName: role.RoleName,
 		}
 	}

@@ -3,10 +3,10 @@ package auth
 import (
 	"context"
 	"errors"
-	"strconv"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -16,7 +16,7 @@ var (
 )
 
 type Claims struct {
-	UserId string     `json:"user_id"`
+	UserId uuid.UUID  `json:"user_id"`
 	Email  string     `json:"email"`
 	Roles  []UserRole `json:"roles"` //defined in the contract.go
 	jwt.RegisteredClaims
@@ -51,7 +51,7 @@ func (s *AuthService) Authenticate(ctx context.Context, email, password string) 
 	//Query DB to get the role from the user.roleId to see what role this
 	//user has
 	claims := Claims{
-		UserId: strconv.Itoa(int(user.Id)),
+		UserId: user.Id,
 		Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)),

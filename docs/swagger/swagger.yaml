@@ -23,7 +23,6 @@ definitions:
       id:
         type: integer
       role_name:
-        example: Admin
         type: string
     type: object
   user.userRequest:

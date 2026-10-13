@@ -1,0 +1,10 @@
+-- +goose Up
+CREATE TABLE IF NOT EXISTS password_resets (
+id UUID PRIMARY KEY DEFAULT uuidv7(),
+user_id UUID REFERENCES users(id)ON DELETE CASCADE,
+token_hash VARCHAR(255)  NOT NULL,
+expires_at TIMESTAMPTZ NOT NULL,
+created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+-- +goose Down
+DROP TABLE IF EXISTS password_resets;

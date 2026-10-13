@@ -58,7 +58,7 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 			//Define the roles required by these routes
 			r.Use(auth.RequiredRoles(
 				core.RoleAdmin,
-				core.RoleUser))
+				core.RoleCustomer))
 			r.Get("/{id}", m.userHandler.GetById)
 
 		})

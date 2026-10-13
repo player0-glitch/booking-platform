@@ -266,8 +266,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "role_name": {
-                    "type": "string",
-                    "example": "Admin"
+                    "type": "string"
                 }
             }
         },
