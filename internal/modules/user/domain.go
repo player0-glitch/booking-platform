@@ -9,15 +9,15 @@ import (
 )
 
 type User struct {
-	// gorm.Model          //id,created_at,updated_at
 	core.Base
 	FirstName    string `gorm:"not null"`
 	LastName     string `gorm:"not null"`
 	Email        string `gorm:"uniqueIndex;not null"`
 	PasswordHash string `gorm:"not null"`
 	//This is for earger loading in a joining query
-	Roles     []Role         `gorm:"many2many:user_roles"`
-	DeletedAt gorm.DeletedAt `gorm:"index;null"`
+	RoleId    int            `gorm:"not null;default:3"`
+	Role      Role           `gorm:"foreignKey:RoleId"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 /*
@@ -36,11 +36,12 @@ type User struct {
     }
 */
 type Role struct {
-	Id        uint
+	Id        int
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	// core.Base
-	RoleName string `gorm:"unique;not null" json:"role_name"`
+	RoleName  string `gorm:"unique;not null" json:"role_name"`
+
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
 
 type RolesRepository interface {

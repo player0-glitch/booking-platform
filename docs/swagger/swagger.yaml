@@ -20,8 +20,6 @@ definitions:
     type: object
   user.rolesRequest:
     properties:
-      id:
-        type: integer
       role_name:
         type: string
     type: object
@@ -31,12 +29,12 @@ definitions:
         type: string
       first_name:
         type: string
+      id:
+        type: string
       last_name:
         type: string
       roles:
-        items:
-          $ref: '#/definitions/user.rolesRequest'
-        type: array
+        $ref: '#/definitions/user.rolesRequest'
     type: object
 host: localhost:8080
 info:

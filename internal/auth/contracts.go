@@ -7,19 +7,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// Private to the auth package
-//
-//	type authenticator interface {
-//		Authenticate(email, password string) (string, error)
-//	}
-
 type storeManager interface {
 	SaveToken(w http.ResponseWriter, r *http.Request, token string) error
 	Clear(w http.ResponseWriter, r *http.Request) error
 }
 
 type UserRole struct {
-	Id   uint
+	Id   int
 	Name string
 }
 
@@ -29,7 +23,7 @@ type AuthUser struct {
 	Id           uuid.UUID
 	Email        string
 	PasswordHash string
-	Roles        []UserRole
+	Role         UserRole
 }
 
 // Contract that the Auth Domain expect to read from the User Domain

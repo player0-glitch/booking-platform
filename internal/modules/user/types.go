@@ -2,7 +2,6 @@ package user
 
 import (
 	"github.com/google/uuid"
-	Logger "github.com/sirupsen/logrus"
 )
 
 type createUserRequest struct {
@@ -13,33 +12,29 @@ type createUserRequest struct {
 }
 
 type rolesRequest struct {
-	Id uint `json:"id"`
-	// Id       uuid.UUID
+	//Do not allow any request to explicitly provide role id
+	Id       int    `json:"-"`
 	RoleName string `json:"role_name"`
 }
 
 type userRequest struct {
-	Id        uuid.UUID      `json:"id"`
-	FirstName string         `json:"first_name"`
-	LastName  string         `json:"last_name"`
-	Email     string         `json:"email"`
-	Roles     []rolesRequest `json:"roles"`
+	Id        uuid.UUID    `json:"id"`
+	FirstName string       `json:"first_name"`
+	LastName  string       `json:"last_name"`
+	Email     string       `json:"email"`
+	Role      rolesRequest `json:"roles"`
 }
 
 func newUserRequest(u *User) userRequest {
-	roles := make([]rolesRequest, len(u.Roles))
 
-	for i, role := range u.Roles {
-		roles[i] = rolesRequest{
-			Id:       role.Id,
-			RoleName: role.RoleName,
-		}
+	role := rolesRequest{
+		Id:       u.RoleId,
+		RoleName: u.Role.RoleName,
 	}
-	Logger.Debugf("Roles Assigned To User: %+v", roles)
 	return userRequest{
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Email:     u.Email,
-		Roles:     roles,
+		Role:      role,
 	}
 }

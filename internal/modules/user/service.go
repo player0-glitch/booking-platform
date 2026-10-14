@@ -20,7 +20,8 @@ type IUserService interface {
 	GetById(ctx context.Context, id uint) (*userRequest, error)
 	SoftDelete(ctx context.Context, id uint) error
 	DeleteById(ctx context.Context, id uint) error
-	FindAll(ctx context.Context) ([]userRequest, error)
+	GetAll(ctx context.Context) ([]userRequest, error)
+	CreateUserWithRole(ctx context.Context, name, lastName, email, password string, roleId int) (*userRequest, error)
 }
 
 // Concrete implementation of IUserService private to the user package
@@ -56,9 +57,27 @@ func (u *userService) CreateUser(ctx context.Context, name, lastName, email, pas
 	return &dto, nil
 }
 
-func (s *userService) GetByEmail(ctx context.Context,
+func (u *userService) CreateUserWithRole(ctx context.Context, name, lastName, email, password string, roleId int) (*userRequest, error) {
+	passwordHash, err := u.hashPassword(password)
+	if err != nil {
+		return nil, fmt.Errorf("Password hashing failed: %w", err)
+	}
+	user := &User{
+		Email:        email,
+		FirstName:    name,
+		LastName:     lastName,
+		PasswordHash: passwordHash,
+	}
+	err = u.userRepo.CreateWithRole(ctx, user, roleId)
+	if err != nil {
+		return nil, err
+	}
+	dto := newUserRequest(user)
+	return &dto, nil
+}
+func (u *userService) GetByEmail(ctx context.Context,
 	email string) (*userRequest, error) {
-	user, err := s.userRepo.GetByEmail(ctx, email)
+	user, err := u.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -66,8 +85,8 @@ func (s *userService) GetByEmail(ctx context.Context,
 	return &dto, nil
 }
 
-func (s *userService) GetById(ctx context.Context, id uint) (*userRequest, error) {
-	user, err := s.userRepo.FindById(ctx, id)
+func (u *userService) GetById(ctx context.Context, id uint) (*userRequest, error) {
+	user, err := u.userRepo.GetById(ctx, id)
 	if err != nil {
 		//idk how to check for this kind of error
 		return nil, err
@@ -76,16 +95,16 @@ func (s *userService) GetById(ctx context.Context, id uint) (*userRequest, error
 	return &dto, nil
 }
 
-func (s *userService) DeleteById(ctx context.Context, id uint) error {
-	return s.userRepo.DeleteById(ctx, id)
+func (u *userService) DeleteById(ctx context.Context, id uint) error {
+	return u.userRepo.DeleteById(ctx, id)
 }
 
 func (s *userService) SoftDelete(ctx context.Context, id uint) error {
 	return s.userRepo.SoftDeleteById(ctx, id)
 }
 
-func (s *userService) FindAll(ctx context.Context) ([]userRequest, error) {
-	users, err := s.userRepo.FindAll(ctx)
+func (s *userService) GetAll(ctx context.Context) ([]userRequest, error) {
+	users, err := s.userRepo.GetAll(ctx)
 	if err != nil {
 		fmt.Printf("A User Model Array Couldn't Be formed: %x", err)
 		return nil, err

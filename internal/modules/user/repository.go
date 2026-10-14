@@ -3,12 +3,13 @@ package user
 import (
 	"booking-platform/internal/core"
 	"context"
+	"fmt"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // var _ core.UserReader = (*UserRepository)(nil)
-
 type UserRepository struct {
 	dbContext *gorm.DB
 }
@@ -22,23 +23,46 @@ func NewUserRepo(dbContext *gorm.DB) *UserRepository {
 // godoc
 // This creates a new user in storage defaulted to a role of Customer
 func (r *UserRepository) Create(ctx context.Context, user *User) error {
-	return r.dbContext.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := tx.Create(user).Error; err != nil {
-			return err
-		}
+	var role Role
+	err := r.dbContext.WithContext(ctx).
+		Where("role_name = ?", string(core.RoleCustomer)).
+		First(&role).Error
 
-		var defaultRole Role
-		if err := tx.Where("role_name = ?", string(core.RoleCustomer)).First(&defaultRole).Error; err != nil {
-			return err
-		}
-
-		return tx.Model(user).Association("Roles").Append(&defaultRole)
-	})
+	if err != nil {
+		return fmt.Errorf("%w: %w ", errFailedToSaveCustomer, err)
+	}
+	return r.dbContext.Create(user).Error
 }
 
-func (r *UserRepository) FindById(ctx context.Context, id uint) (*User, error) {
+// godoc
+// Create a user with any role ("Super Admin", "Admin","Customer","Guest")
+func (r *UserRepository) CreateWithRole(ctx context.Context, user *User, roleId int) error {
+	var role Role
+	err := r.dbContext.WithContext(ctx).Where("role_name = ?", &role, roleId).Error
+	if err != nil {
+		return fmt.Errorf("%w: %w", gorm.ErrRecordNotFound, err)
+	}
+	return r.dbContext.Create(user).Error
+}
+func (r *UserRepository) SeedUserIfNotExist(ctx context.Context, user *User, roleId int) (bool, error) {
+	var role Role
+	err := r.dbContext.WithContext(ctx).Where("role_name = ?", &role, roleId).Error
+	if err != nil {
+		return false, fmt.Errorf("%w: %w", gorm.ErrRecordNotFound, err)
+	}
+	result := r.dbContext.Clauses(clause.OnConflict{DoNothing: true}).Create(user)
+	if result.Error != nil {
+		//Row has been used
+		return false, result.Error
+	}
+	//on a conflict nothing is injected into the result.RowsAffected
+	return result.RowsAffected == 1, nil
+}
+
+func (r *UserRepository) GetById(ctx context.Context, id uint) (*User, error) {
 	var user User
-	err := r.dbContext.WithContext(ctx).Preload("Roles").Limit(1).First(&user, id).Error
+	err := r.dbContext.WithContext(ctx).
+		Joins("Role").First(&user, id).Error
 
 	if err != nil {
 		return nil, errRecordNotFound
@@ -48,29 +72,38 @@ func (r *UserRepository) FindById(ctx context.Context, id uint) (*User, error) {
 
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
-	err := r.dbContext.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	err := r.dbContext.WithContext(ctx).
+		Joins("Role").Where("email = ?", email).First(&user).Error
 	if err != nil {
+		return nil, errRecordNotFound
 	}
 	return &user, nil
 }
-func (r *UserRepository) GetByEmailWithRoles(ctx context.Context, email string) (*User, error) {
-	var user User
-	err := r.dbContext.WithContext(ctx).Preload("Roles").Where("email = ?", email).First(&user).Error
 
-	if err != nil {
-		return nil, err
-	}
-	return &user, nil
-}
-func (r *UserRepository) FindAll(ctx context.Context) ([]User, error) {
+//	func (r *UserRepository) GetByEmailWithRoles(ctx context.Context, email string) (*User, error) {
+//		var user User
+//		err := r.dbContext.WithContext(ctx).Preload("Roles").Where("email = ?", email).First(&user).Error
+//
+//		if err != nil {
+//			return nil, errRecordNotFound
+//		}
+//		return &user, nil
+//	}
+func (r *UserRepository) GetAll(ctx context.Context) ([]User, error) {
 	var users []User
-	err := r.dbContext.WithContext(ctx).Find(&users).Error
+	err := r.dbContext.WithContext(ctx).
+		Joins("Role").
+		Order("created_at DESC").
+		Limit(50).
+		Find(&users).Error
+
 	if err != nil {
 		return nil, err
 	}
 	return users, nil
 }
 
+// Permanently delete by id but i might need to not use this
 func (r *UserRepository) DeleteById(ctx context.Context, id uint) error {
 	var user User
 	return r.dbContext.Unscoped().WithContext(ctx).Delete(&user, id).Error
@@ -81,6 +114,7 @@ func (r *UserRepository) SoftDeleteById(ctx context.Context, id uint) error {
 	return r.dbContext.WithContext(ctx).Delete(&user, id).Error
 }
 
+// Permanently delete by email but i might need to not use this
 func (repo *UserRepository) DeleteByEmail(ctx context.Context, email string) error {
 	/*this permanently deletes the records instead of setting
 	*  deleted_at column to a timestamp (Soft Delete)

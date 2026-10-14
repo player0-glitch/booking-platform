@@ -18,24 +18,35 @@ var (
 	guestPassword      = ""
 )
 
-type roles struct {
-	Id       int
+type ISeeder interface {
+	SeedUserIfNotExist(context.Context, *user.User, int) (bool, error)
+}
+type role struct {
+	// Id       int
 	RoleName core.Role
 }
 type seedUser struct {
-	FirstName string
-	LastName  string
-	Email     string
-	Role      []roles
-	// RoleID      int
+	FirstName   string
+	LastName    string
+	Email       string
+	RoleID      int
 	PasswordEnv string
+}
+type Seeder struct {
+	userRepo ISeeder
+}
+
+func NewSeeder(userRepo ISeeder) *Seeder {
+	return &Seeder{
+		userRepo: userRepo,
+	}
 }
 
 var userSeeds = []seedUser{
-	{"Super", "User", "super@example.com", []roles{{Id: 1, RoleName: core.RoleSuperAdmin}}, superAdminPassword},
-	{"Admin", "User", "admin@example.com", []roles{{Id: 2, RoleName: core.RoleAdmin}}, adminPassword},
-	{"Customer", "User", "customer@example.com", []roles{{Id: 3, RoleName: core.RoleCustomer}}, customerPassword},
-	{"Guest", "User", "guest@example.com", []roles{{Id: 4, RoleName: core.RoleGuest}}, guestPassword},
+	{"Super", "User", "super@example.com" /*role{RoleName: core.RoleSuperAdmin},*/, core.RoleSuperAdminID, superAdminPassword},
+	{"Admin", "User", "admin@example.com" /*role{RoleName: core.RoleAdmin},*/, core.RoleAdminID, adminPassword},
+	{"Customer", "User", "customer@example.com" /* role{RoleName: core.RoleCustomer},*/, core.RoleCustomerID, customerPassword},
+	{"Guest", "User", "guest@example.com" /*role{RoleName: core.RoleGuest},*/, core.RoleGuestID, guestPassword},
 }
 
 func SeedUsers(ctx context.Context, userRepo user.UserRepository) error {
@@ -44,6 +55,7 @@ func SeedUsers(ctx context.Context, userRepo user.UserRepository) error {
 	//Ensure existence
 	for i := 0; i < len(userSeeds)-1; i++ {
 		pw := userSeeds[i]
+		fmt.Printf("Passwords from env: %s", pw.PasswordEnv)
 		if strings.TrimSpace(pw.PasswordEnv) == "" {
 			missing = append(missing, pw.PasswordEnv)
 			continue
@@ -73,14 +85,11 @@ func SeedUsers(ctx context.Context, userRepo user.UserRepository) error {
 			LastName:     s.LastName,
 			Email:        s.Email,
 			PasswordHash: hash,
+			RoleId:       s.RoleID,
+			// Role:         user.Role{Id: s.RoleID},
 		}
-		for _, r := range s.Role {
-			ur := &user.Role{
-				Id:       uint(r.Id),
-				RoleName: string(r.RoleName),
-			}
-			u.Roles = append(u.Roles, *ur)
-		}
+		userRepo.SeedUserIfNotExist(ctx, u, u.RoleId)
+
 	}
 	return nil
 

@@ -6,7 +6,9 @@ import (
 
 // Handler/Controller errors
 var (
-	errJsonDecoder    = errors.New("Failed To Decode Json")
-	errParse          = errors.New("Failed to parse writeJsonResponse data")
-	errRecordNotFound = errors.New("No Record Found In The Database")
+	errJsonDecoder              = errors.New("Failed To Decode Json")
+	errParse                    = errors.New("Failed to parse writeJsonResponse data")
+	errRecordNotFound           = errors.New("No Record Found In The Database")
+	errFailedToSaveCustomer     = errors.New("Failed To Create User (customer)")
+	errFailedToSaveUserWithRole = errors.New("Failed To Create User (customer)")
 )

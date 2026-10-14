@@ -11,7 +11,7 @@ import (
 type Base struct {
 	ID        uuid.UUID `gorm:"type:uuid;primaryKey"`
 	CreatedAt time.Time
-	UpdatedAp time.Time
+	UpdatedAt time.Time
 	/* DeletedAt gorm.DeletedAt /*only use this for entity that will
 	need it especially as an index */
 }

@@ -100,11 +100,6 @@ test:
 
 # All migration files live in one migrations/ directory at root level 
 # each module still has ownership of it's migrations as per the naming convention
-# 000001-user-create-user.up.sql
-# Notice the following;
-# 000001 -> migration order
-# user -> module/domain
-# create-> migration action i guess i don't know
 .PHONY: migrate-status migrate-up migrate-down 	migration migrate-force
 DB_URL = sqlite3://storage/go_db.sqlite
 MIGRATIONS_DIR ?= ./migrations/
@@ -127,3 +122,4 @@ migration-fix:
 	@goose fix
 migration-reset:
 	@goose reset
+

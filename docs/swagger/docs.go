@@ -262,9 +262,6 @@ const docTemplate = `{
         "user.rolesRequest": {
             "type": "object",
             "properties": {
-                "id": {
-                    "type": "integer"
-                },
                 "role_name": {
                     "type": "string"
                 }
@@ -279,14 +276,14 @@ const docTemplate = `{
                 "first_name": {
                     "type": "string"
                 },
+                "id": {
+                    "type": "string"
+                },
                 "last_name": {
                     "type": "string"
                 },
                 "roles": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/user.rolesRequest"
-                    }
+                    "$ref": "#/definitions/user.rolesRequest"
                 }
             }
         }

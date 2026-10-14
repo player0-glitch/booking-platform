@@ -16,9 +16,10 @@ var (
 )
 
 type Claims struct {
-	UserId uuid.UUID  `json:"user_id"`
-	Email  string     `json:"email"`
-	Roles  []UserRole `json:"roles"` //defined in the contract.go
+	UserId uuid.UUID `json:"user_id"`
+	// Email  string    `json:"email"`
+	// Roles  []UserRole `json:"roles"` //defined in the contract.go
+	Role UserRole `json:"role"`
 	jwt.RegisteredClaims
 }
 
@@ -43,7 +44,6 @@ func (s *AuthService) Authenticate(ctx context.Context, email, password string) 
 		return "Invalid Email, No Database Match", err
 	}
 
-	//authenticate
 	if email != user.Email ||
 		!s.checkPassword(password, user.PasswordHash) {
 		return "", ErrInvalidCredentials
@@ -52,12 +52,12 @@ func (s *AuthService) Authenticate(ctx context.Context, email, password string) 
 	//user has
 	claims := Claims{
 		UserId: user.Id,
-		Email:  email,
+		// Email:  email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
-		Roles: user.Roles,
+		Role: user.Role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	//after validating token,add the user to the context for authorization

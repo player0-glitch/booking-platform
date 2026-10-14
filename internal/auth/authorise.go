@@ -7,8 +7,8 @@ import (
 )
 
 type AuthenticatedUser struct {
-	Id    uint
-	Roles []UserRole //defined as a type in auth service file
+	Id   uint
+	Role UserRole //defined as a type in auth service file
 }
 type contextKey string
 
@@ -34,12 +34,12 @@ func RequiredRoles(allowedRoles ...core.Role) func(http.Handler) http.Handler {
 				http.Error(w, "Unauthorised User", http.StatusUnauthorized)
 				return
 			}
-			for _, userRole := range user.Roles {
-				if _, ok := allowed[core.Role(userRole.Name)]; ok {
-					next.ServeHTTP(w, r)
-					return
-				}
+			// for _, userRole := range user.Roles {
+			if _, ok := allowed[core.Role(user.Role.Name)]; ok {
+				next.ServeHTTP(w, r)
+				return
 			}
+			// }
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		})
 	}

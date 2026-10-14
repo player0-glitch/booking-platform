@@ -55,7 +55,7 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure		403
 // @Router		/users/all	[get]
 func (c *UserController) GetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := c.userService.FindAll(r.Context())
+	users, err := c.userService.GetAll(r.Context())
 	if err != nil {
 		json.RequestErrorHandler(w, errors.New("Server Failed To Get All Users"))
 		return
@@ -143,8 +143,9 @@ func (c *UserController) SoftDeleteById(w http.ResponseWriter, r *http.Request) 
 }
 
 func (c *UserController) ChangeUserRole(w http.ResponseWriter, r *http.Request) {
-
+	json.WriteError(w, http.StatusInternalServerError, "Not Yet Implemented")
 }
-func (c *UserController) RevokeRole(w http.ResponseWriter, r *http.Request) {
 
+func (c *UserController) RevokeRole(w http.ResponseWriter, r *http.Request) {
+	json.WriteError(w, http.StatusInternalServerError, "Not Yet Implemented")
 }

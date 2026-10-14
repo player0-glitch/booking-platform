@@ -73,6 +73,8 @@ func main() {
 		DB:             databaseContext.DB(),
 		AuthMiddleware: authModule.AuthMiddlware,
 	})
+	//Run anu seeder before the app starts
+	runSeeders(context.Background(), databaseContext)
 
 	app, errAppStart := app.NewApplication(
 		authModule,
@@ -89,7 +91,7 @@ func main() {
 	server := server.NewServer(server.Params{
 		Application: app,
 		Database:    databaseContext,
-		Port:        8080,
+		// Port:        8080,
 	})
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
@@ -120,4 +122,9 @@ func fulfillAuthUserContract(jwtSecret string, db database.Service) *auth.AuthSe
 	userRepo := user.NewUserRepo(db.DB())
 	userReader := adapters.NewUserAdapter(userRepo)
 	return auth.NewAuthService(userReader, []byte(jwtSecret))
+}
+func runSeeders(ctx context.Context, db database.Service) {
+	userRepo := user.NewUserRepo(db.DB())
+	database.SeedUsers(ctx, *userRepo)
+
 }

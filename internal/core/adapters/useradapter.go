@@ -17,23 +17,22 @@ func NewUserAdapter(userRepo *user.UserRepository) *UserAdapter {
 }
 
 func (a *UserAdapter) GetByEmailWithRoles(ctx context.Context, email string) (*auth.AuthUser, error) {
-	userModel, err := a.userRepo.GetByEmailWithRoles(ctx, email)
+	userModel, err := a.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
+	role := auth.UserRole{
+		Id:   userModel.RoleId,
+		Name: userModel.Role.RoleName,
+	}
 	authUser := &auth.AuthUser{
 		Id:           (userModel.Base.ID),
 		Email:        userModel.Email,
 		PasswordHash: userModel.PasswordHash,
-		Roles:        make([]auth.UserRole, 0, len(userModel.Roles)),
+		Role:         role,
 	}
-	for _, role := range userModel.Roles {
-		authUser.Roles = append(authUser.Roles, auth.UserRole{
-			Id:   role.Id,
-			Name: role.RoleName,
-		})
-	}
+
 	return authUser, nil
 }
 

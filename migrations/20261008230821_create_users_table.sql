@@ -19,14 +19,14 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email) WHERE deleted_
 -- Create index for deleted_at for gorm:index
 CREATE INDEX IF NOT EXISTS idx_users_deleted_at ON users(deleted_at);
 CREATE INDEX IF NOT EXISTS idx_users_role_id ON users(role_id);
-
-INSERT INTO users (first_name,last_name,email,role_id) VALUES
-('Super','User','super@example.com',1),
-('Admin','User','admin@example.com',2),
-('Customer','User','customer@example.com',3),
-('Guest','User','guest@example.com',4)
-ON CONFLICT (email) WHERE deleted_at IS NULL DO NOTHING;
-
+--
+-- INSERT INTO users (first_name,last_name,email,role_id) VALUES
+-- ('Super','User','super@example.com',1),
+-- ('Admin','User','admin@example.com',2),
+-- ('Customer','User','customer@example.com',3),
+-- ('Guest','User','guest@example.com',4)
+-- ON CONFLICT (email) WHERE deleted_at IS NULL DO NOTHING;
+--
 -- +goose Down
 DROP INDEX IF EXISTS idx_users_roles;
 DROP INDEX IF EXISTS idx_users_email;
