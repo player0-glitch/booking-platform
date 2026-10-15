@@ -6,7 +6,6 @@ import (
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,14 +13,6 @@ var (
 	ErrInvalidCredentials = errors.New("JWT Credentials Are Invalid")
 	ErrInvalidToken       = errors.New("JWT Token Are Invalid")
 )
-
-type Claims struct {
-	UserId uuid.UUID `json:"user_id"`
-	// Email  string    `json:"email"`
-	// Roles  []UserRole `json:"roles"` //defined in the contract.go
-	Role UserRole `json:"role"`
-	jwt.RegisteredClaims
-}
 
 type AuthService struct {
 	jwtSecret  []byte
@@ -60,7 +51,6 @@ func (s *AuthService) Authenticate(ctx context.Context, email, password string) 
 		Role: user.Role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	//after validating token,add the user to the context for authorization
 
 	return token.SignedString(s.jwtSecret)
 }

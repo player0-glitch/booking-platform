@@ -2,6 +2,7 @@ package auth
 
 import (
 	chi "github.com/go-chi/chi/v5"
+	"gorm.io/gorm"
 )
 
 type Module struct {
@@ -10,8 +11,9 @@ type Module struct {
 	handler *AuthHandler
 }
 type ModuleParams struct {
-	JwtSecret   string
-	AuthService *AuthService
+	JwtSecret string
+	// AuthService *AuthService
+	DB *gorm.DB
 }
 
 // Contracts/Interfaces owned by the consumers
@@ -22,6 +24,7 @@ func (m *Module) Name() string {
 
 func NewModule(params ModuleParams) *Module {
 	//AuthService implements Authenticate that authenticator uses
+
 	store := NewStoreManager([]byte(params.JwtSecret), "app_session")
 	return &Module{
 		service: params.AuthService,

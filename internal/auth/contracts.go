@@ -29,4 +29,5 @@ type AuthUser struct {
 // Contract that the Auth Domain expect to read from the User Domain
 type UserReader interface {
 	GetByEmailWithRoles(context.Context, string) (*AuthUser, error)
+	CreateProvisonGuest()
 }

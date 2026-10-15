@@ -4,10 +4,12 @@ import (
 	"booking-platform/internal/core"
 	"context"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type AuthenticatedUser struct {
-	Id   uint
+	Id   uuid.UUID
 	Role UserRole //defined as a type in auth service file
 }
 type contextKey string
