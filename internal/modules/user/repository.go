@@ -5,11 +5,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-// var _ core.UserReader = (*UserRepository)(nil)
+type role core.Role
 type UserRepository struct {
 	dbContext *gorm.DB
 }
@@ -59,7 +60,7 @@ func (r *UserRepository) SeedUserIfNotExist(ctx context.Context, user *User, rol
 	return result.RowsAffected == 1, nil
 }
 
-func (r *UserRepository) GetById(ctx context.Context, id uint) (*User, error) {
+func (r *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*User, error) {
 	var user User
 	err := r.dbContext.WithContext(ctx).
 		Joins("Role").First(&user, id).Error
@@ -80,21 +81,25 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*User, e
 	return &user, nil
 }
 
-//	func (r *UserRepository) GetByEmailWithRoles(ctx context.Context, email string) (*User, error) {
-//		var user User
-//		err := r.dbContext.WithContext(ctx).Preload("Roles").Where("email = ?", email).First(&user).Error
-//
-//		if err != nil {
-//			return nil, errRecordNotFound
-//		}
-//		return &user, nil
-//	}
+func (r *UserRepository) GetUsersByRoleId(ctx context.Context, id core.RoleID) ([]User, error) {
+
+	var users []User
+	err := r.dbContext.WithContext(ctx).
+		Joins("Role").
+		Where(&User{RoleId: int(id)}).
+		Find(&users).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}
 func (r *UserRepository) GetAll(ctx context.Context) ([]User, error) {
 	var users []User
 	err := r.dbContext.WithContext(ctx).
 		Joins("Role").
 		Order("created_at DESC").
-		Limit(50).
+		// Limit(50).
 		Find(&users).Error
 
 	if err != nil {
@@ -104,20 +109,32 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]User, error) {
 }
 
 // Permanently delete by id but i might need to not use this
-func (r *UserRepository) DeleteById(ctx context.Context, id uint) error {
+func (r *UserRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	var user User
 	return r.dbContext.Unscoped().WithContext(ctx).Delete(&user, id).Error
 }
 
-func (r *UserRepository) SoftDeleteById(ctx context.Context, id uint) error {
+func (r *UserRepository) SoftDeleteById(ctx context.Context, id uuid.UUID) error {
 	var user User
 	return r.dbContext.WithContext(ctx).Delete(&user, id).Error
 }
 
 // Permanently delete by email but i might need to not use this
-func (repo *UserRepository) DeleteByEmail(ctx context.Context, email string) error {
+func (r *UserRepository) DeleteByEmail(ctx context.Context, email string) error {
 	/*this permanently deletes the records instead of setting
 	*  deleted_at column to a timestamp (Soft Delete)
 	 */
-	return repo.dbContext.Unscoped().WithContext(ctx).Delete(&email).Error
+	return r.dbContext.Unscoped().WithContext(ctx).Delete(&email).Error
+}
+
+// godoc
+// Used to create a temporary GUEST user
+func (r *UserRepository) ProvisionGuest(ctx context.Context) (*User, error) {
+	id := core.RoleToID[core.RoleGuest]
+	user := &User{Role: Role{Id: int(id)}}
+	err := r.dbContext.WithContext(ctx).Create(user).Error
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", gorm.ErrRecordNotFound, err)
+	}
+	return user, err
 }

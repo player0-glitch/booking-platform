@@ -30,6 +30,7 @@ definitions:
       first_name:
         type: string
       id:
+        format: uuid
         type: string
       last_name:
         type: string
@@ -98,10 +99,11 @@ paths:
     delete:
       parameters:
       - description: User Id
+        format: uuid
         in: path
         name: request
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -121,10 +123,11 @@ paths:
     get:
       parameters:
       - description: User Id
+        format: uuid
         in: path
         name: id
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -148,7 +151,7 @@ paths:
         in: path
         name: request
         required: true
-        type: integer
+        type: string
       produces:
       - application/json
       responses:
@@ -163,6 +166,28 @@ paths:
       security:
       - BearerAuth: []
       summary: Solf delete user by id
+      tags:
+      - users
+  /users/{rolename}:
+    get:
+      parameters:
+      - description: Role Name
+        in: path
+        name: rolename
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "403":
+          description: Forbidden
+        "404":
+          description: Not Found
+      security:
+      - BearerAuth: []
+      summary: Get Users by role
       tags:
       - users
   /users/all:

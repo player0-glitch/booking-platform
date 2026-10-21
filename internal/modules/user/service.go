@@ -1,10 +1,12 @@
 package user
 
 import (
+	"booking-platform/internal/core"
 	"context"
 	"errors"
 	"fmt"
 
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -17,11 +19,12 @@ var (
 type IUserService interface {
 	CreateUser(ctx context.Context, name, lastName, email, password string) (*userRequest, error)
 	GetByEmail(ctx context.Context, email string) (*userRequest, error)
-	GetById(ctx context.Context, id uint) (*userRequest, error)
-	SoftDelete(ctx context.Context, id uint) error
-	DeleteById(ctx context.Context, id uint) error
+	GetById(ctx context.Context, id uuid.UUID) (*userRequest, error)
+	SoftDelete(ctx context.Context, id uuid.UUID) error
+	DeleteById(ctx context.Context, id uuid.UUID) error
 	GetAll(ctx context.Context) ([]userRequest, error)
 	CreateUserWithRole(ctx context.Context, name, lastName, email, password string, roleId int) (*userRequest, error)
+	GetUsersByRole(ctx context.Context, roleName string) ([]userRequest, error)
 }
 
 // Concrete implementation of IUserService private to the user package
@@ -85,7 +88,7 @@ func (u *userService) GetByEmail(ctx context.Context,
 	return &dto, nil
 }
 
-func (u *userService) GetById(ctx context.Context, id uint) (*userRequest, error) {
+func (u *userService) GetById(ctx context.Context, id uuid.UUID) (*userRequest, error) {
 	user, err := u.userRepo.GetById(ctx, id)
 	if err != nil {
 		//idk how to check for this kind of error
@@ -95,19 +98,44 @@ func (u *userService) GetById(ctx context.Context, id uint) (*userRequest, error
 	return &dto, nil
 }
 
-func (u *userService) DeleteById(ctx context.Context, id uint) error {
+func (u *userService) DeleteById(ctx context.Context, id uuid.UUID) error {
 	return u.userRepo.DeleteById(ctx, id)
 }
 
-func (s *userService) SoftDelete(ctx context.Context, id uint) error {
+func (s *userService) SoftDelete(ctx context.Context, id uuid.UUID) error {
 	return s.userRepo.SoftDeleteById(ctx, id)
+}
+
+func (s *userService) GetUsersByRole(ctx context.Context, roleName string) ([]userRequest, error) {
+
+	r, err := core.ParseRole(roleName)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid Role Name Provided")
+	}
+
+	id, _ := r.ID()
+
+	users, err := s.userRepo.GetUsersByRoleId(ctx, id)
+
+	if err != nil {
+
+		return nil, fmt.Errorf("A User Model Array Couldn't Be formed: %x", err)
+	}
+
+	fmt.Printf("A User Model: %+v", users[0])
+
+	reqs := make([]userRequest, 0, len(users))
+	for _, u := range users {
+		reqs = append(reqs, newUserRequest(&u))
+	}
+	return reqs, nil
 }
 
 func (s *userService) GetAll(ctx context.Context) ([]userRequest, error) {
 	users, err := s.userRepo.GetAll(ctx)
+
 	if err != nil {
-		fmt.Printf("A User Model Array Couldn't Be formed: %x", err)
-		return nil, err
+		return nil, fmt.Errorf("A User Model Array Couldn't Be formed: %v", err)
 	}
 
 	fmt.Printf("A User Model: %+v", users[0])

@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"booking-platform/internal/core"
 	"context"
 	"net/http"
 
@@ -13,7 +14,7 @@ type storeManager interface {
 }
 
 type UserRole struct {
-	Id   int
+	Id   core.RoleID
 	Name string
 }
 
@@ -29,5 +30,5 @@ type AuthUser struct {
 // Contract that the Auth Domain expect to read from the User Domain
 type UserReader interface {
 	GetByEmailWithRoles(context.Context, string) (*AuthUser, error)
-	CreateProvisonGuest()
+	ProvisionGuest(ctx context.Context) (*AuthUser, error)
 }

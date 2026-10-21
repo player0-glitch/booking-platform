@@ -130,7 +130,8 @@ const docTemplate = `{
                 "summary": "Retrieve user by id",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
+                        "format": "uuid",
                         "description": "User Id",
                         "name": "id",
                         "in": "path",
@@ -167,7 +168,8 @@ const docTemplate = `{
                 "summary": "Delete user by id",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
+                        "format": "uuid",
                         "description": "User Id",
                         "name": "request",
                         "in": "path",
@@ -206,7 +208,7 @@ const docTemplate = `{
                 "summary": "Solf delete user by id",
                 "parameters": [
                     {
-                        "type": "integer",
+                        "type": "string",
                         "description": "User Id",
                         "name": "request",
                         "in": "path",
@@ -219,6 +221,42 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/user.userRequest"
                         }
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    },
+                    "404": {
+                        "description": "Not Found"
+                    }
+                }
+            }
+        },
+        "/users/{rolename}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Get Users by role",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Role Name",
+                        "name": "rolename",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
                     },
                     "403": {
                         "description": "Forbidden"
@@ -277,7 +315,8 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "uuid"
                 },
                 "last_name": {
                     "type": "string"

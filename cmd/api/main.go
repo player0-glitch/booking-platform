@@ -63,11 +63,12 @@ func main() {
 		}
 	}()
 	jwtSecret := os.Getenv("SESSION_STORE_KEY")
-	//Initialise the modularized application
+	//Initialise the modularized application in reverse order, what's on top must
+	// be dependent on by what's at the bottom
 	fmt.Println("Registering Modules")
 	authModule := auth.NewModule(auth.ModuleParams{
-		JwtSecret:   jwtSecret,
-		AuthService: fulfillAuthUserContract(jwtSecret, databaseContext),
+		JwtSecret:  jwtSecret,
+		UserReader: fulfillAuthUserContract(jwtSecret, databaseContext),
 	})
 	userModule := user.NewModule(user.ModuleParams{
 		DB:             databaseContext.DB(),
@@ -118,13 +119,12 @@ func main() {
 // Fullfil the contract that the Auth & User module agree on.
 // Auth module wants a UserReader with GetByEmailWithRoles and defines the contract
 // UserRepository implements the interface/contract
-func fulfillAuthUserContract(jwtSecret string, db database.Service) *auth.AuthService {
+func fulfillAuthUserContract(jwtSecret string, db database.Service) *adapters.UserAdapter {
 	userRepo := user.NewUserRepo(db.DB())
-	userReader := adapters.NewUserAdapter(userRepo)
-	return auth.NewAuthService(userReader, []byte(jwtSecret))
+	return adapters.NewUserAdapter(userRepo)
 }
+
 func runSeeders(ctx context.Context, db database.Service) {
 	userRepo := user.NewUserRepo(db.DB())
 	database.SeedUsers(ctx, *userRepo)
-
 }

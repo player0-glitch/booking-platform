@@ -43,14 +43,16 @@ func Reader(r *http.Request, data any) error {
 
 // Global HTTP handler errors. These are typically shared between all modules
 var (
-	//Used to return errors that our API consumer needs to resolve
+	//godoc
+	//Used to return errors that occur in the API request that the consumer needs to resolve
 	RequestErrorHandler = func(w http.ResponseWriter, err error) {
 		WriteError(w, http.StatusBadRequest, err.Error())
 	}
-	//This is for generic errors that may occur in the server and are not a
+
+	// godoc
+	// This is for generic errors that may occur in the server and are not a
 	// result of the user's input
 	InternalErrorHandler = func(w http.ResponseWriter, err error) {
-
 		WriteError(w, http.StatusInternalServerError, "Internal Server Error Occured")
 	}
 )

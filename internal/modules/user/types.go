@@ -18,7 +18,7 @@ type rolesRequest struct {
 }
 
 type userRequest struct {
-	Id        uuid.UUID    `json:"id"`
+	Id        uuid.UUID    `json:"id" swaggertype:"string" format:"uuid"`
 	FirstName string       `json:"first_name"`
 	LastName  string       `json:"last_name"`
 	Email     string       `json:"email"`
@@ -32,6 +32,7 @@ func newUserRequest(u *User) userRequest {
 		RoleName: u.Role.RoleName,
 	}
 	return userRequest{
+		Id:        u.Base.ID,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Email:     u.Email,

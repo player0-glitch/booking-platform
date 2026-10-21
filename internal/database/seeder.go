@@ -21,10 +21,11 @@ var (
 type ISeeder interface {
 	SeedUserIfNotExist(context.Context, *user.User, int) (bool, error)
 }
-type role struct {
-	// Id       int
-	RoleName core.Role
-}
+
+//	type role struct {
+//		// Id       int
+//		RoleName core.Role
+//	}
 type seedUser struct {
 	FirstName   string
 	LastName    string
@@ -43,10 +44,10 @@ func NewSeeder(userRepo ISeeder) *Seeder {
 }
 
 var userSeeds = []seedUser{
-	{"Super", "User", "super@example.com" /*role{RoleName: core.RoleSuperAdmin},*/, core.RoleSuperAdminID, superAdminPassword},
-	{"Admin", "User", "admin@example.com" /*role{RoleName: core.RoleAdmin},*/, core.RoleAdminID, adminPassword},
-	{"Customer", "User", "customer@example.com" /* role{RoleName: core.RoleCustomer},*/, core.RoleCustomerID, customerPassword},
-	{"Guest", "User", "guest@example.com" /*role{RoleName: core.RoleGuest},*/, core.RoleGuestID, guestPassword},
+	{"Super", "User", "super@example.com" /*role{RoleName: core.RoleSuperAdmin},*/, int(core.RoleSuperAdminID), superAdminPassword},
+	{"Admin", "User", "admin@example.com" /*role{RoleName: core.RoleAdmin},*/, int(core.RoleAdminID), adminPassword},
+	{"Customer", "User", "customer@example.com" /* role{RoleName: core.RoleCustomer},*/, int(core.RoleCustomerID), customerPassword},
+	{"Guest", "User", "guest@example.com" /*role{RoleName: core.RoleGuest},*/, int(core.RoleGuestID), guestPassword},
 }
 
 func SeedUsers(ctx context.Context, userRepo user.UserRepository) error {
@@ -55,7 +56,6 @@ func SeedUsers(ctx context.Context, userRepo user.UserRepository) error {
 	//Ensure existence
 	for i := 0; i < len(userSeeds)-1; i++ {
 		pw := userSeeds[i]
-		fmt.Printf("Passwords from env: %s", pw.PasswordEnv)
 		if strings.TrimSpace(pw.PasswordEnv) == "" {
 			missing = append(missing, pw.PasswordEnv)
 			continue

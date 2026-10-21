@@ -33,21 +33,24 @@ func (m *Module) AuthMiddlware(next http.Handler) http.Handler {
 		}
 		//No token or claim exists in the session
 		//Instead of Unauthorising a user, provision them a 'guest' role
+		//save the token in here
 		if err != nil || tokenStr == "" || claims == nil {
-			claims, err := m.service.CreateProvisionGuest(r, w)
+			claims, err = m.service.CreateProvisionGuest(r, w)
 			if err != nil {
-				http.Error(w, "Internal Auth Server Error", http.StatusInternalServerError)
+				http.Error(w, "Cannot Create A Provisioned Guest", http.StatusInternalServerError)
 				return
 			}
 		}
+
 		// claims, err := m.service.ValidateToken(tokenStr)
 		// if err != nil {
 		// 	http.Error(w, "Unauthorised: No Valid Token Or It Expired", http.StatusUnauthorized)
 		// 	return
 		// }
-		authUser := AuthenticatedUser{
-			Id:   claims.UserId,
-			Role: claims.Role,
+
+		authUser := authenticatedUser{
+			id:   claims.UserId,
+			role: claims.Role,
 		}
 		ctx := context.WithValue(r.Context(), UserContextKey, authUser)
 		next.ServeHTTP(w, r.WithContext(ctx))

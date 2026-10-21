@@ -8,16 +8,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type AuthenticatedUser struct {
-	Id   uuid.UUID
-	Role UserRole //defined as a type in auth service file
+type authenticatedUser struct {
+	id   uuid.UUID
+	role UserRole //defined as a type in auth service file
 }
 type contextKey string
 
 const authenticatedUserKey contextKey = "authenticated_user"
 
-func UserFromContext(ctx context.Context) (AuthenticatedUser, bool) {
-	user, ok := ctx.Value(authenticatedUserKey).(AuthenticatedUser)
+func UserFromContext(ctx context.Context) (authenticatedUser, bool) {
+	user, ok := ctx.Value(authenticatedUserKey).(authenticatedUser)
 	return user, ok
 }
 
@@ -36,12 +36,10 @@ func RequiredRoles(allowedRoles ...core.Role) func(http.Handler) http.Handler {
 				http.Error(w, "Unauthorised User", http.StatusUnauthorized)
 				return
 			}
-			// for _, userRole := range user.Roles {
-			if _, ok := allowed[core.Role(user.Role.Name)]; ok {
+			if _, ok := allowed[core.Role(user.role.Name)]; ok {
 				next.ServeHTTP(w, r)
 				return
 			}
-			// }
 			http.Error(w, "Forbidden", http.StatusForbidden)
 		})
 	}

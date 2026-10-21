@@ -13,10 +13,9 @@ type Middleware func(http.Handler) http.Handler
 
 // Module Structure it self
 type Module struct {
-	userService IUserService
-	// Controllers Controllers
-	userHandler    *UserController
-	authMiddleware Middleware
+	userService    IUserService
+	userHandler    *UserHandler
+	authMiddleware *Middleware
 }
 
 // Implement the applications's Module interface
@@ -45,7 +44,7 @@ func NewModule(params ModuleParams) *Module {
 	return &Module{
 		userService:    userService,
 		userHandler:    userHandler,
-		authMiddleware: params.AuthMiddleware,
+		authMiddleware: &params.AuthMiddleware,
 	}
 }
 
@@ -54,14 +53,17 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 		r.Get("/all", m.userHandler.GetAll)
 		r.Post("/", m.userHandler.Create)
 		r.Group(func(r chi.Router) {
-			r.Use(m.authMiddleware)
+			r.Use(*m.authMiddleware)
+
 			//Define the roles required by these routes
 			r.Use(auth.RequiredRoles(
 				core.RoleAdmin,
+				core.RoleGuest, /*provision guest*/
 				core.RoleCustomer))
 			r.Get("/{id}", m.userHandler.GetById)
-
 		})
+		//Should fallback to Provisioning a Guest User
+		r.Get("/{rolename}", m.userHandler.GetUsersByRole)
 
 		r.Group(func(r chi.Router) {
 			r.Use(auth.RequiredRoles(core.RoleAdmin))

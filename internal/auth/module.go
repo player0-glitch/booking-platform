@@ -11,9 +11,9 @@ type Module struct {
 	handler *AuthHandler
 }
 type ModuleParams struct {
-	JwtSecret string
-	// AuthService *AuthService
-	DB *gorm.DB
+	JwtSecret  string
+	DB         *gorm.DB
+	UserReader UserReader //contract it expects to read from user
 }
 
 // Contracts/Interfaces owned by the consumers
@@ -24,12 +24,12 @@ func (m *Module) Name() string {
 
 func NewModule(params ModuleParams) *Module {
 	//AuthService implements Authenticate that authenticator uses
-
 	store := NewStoreManager([]byte(params.JwtSecret), "app_session")
+	svc := NewAuthService(params.UserReader, []byte(params.JwtSecret), store)
 	return &Module{
-		service: params.AuthService,
+		service: svc,
 		store:   store,
-		handler: NewAuthHandler(params.AuthService, store),
+		handler: NewAuthHandler(svc),
 	}
 }
 

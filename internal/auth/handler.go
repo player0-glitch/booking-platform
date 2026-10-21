@@ -8,13 +8,11 @@ import (
 
 type AuthHandler struct {
 	service *AuthService
-	store   *StoreManager
 }
 
-func NewAuthHandler(service *AuthService, store *StoreManager) *AuthHandler {
+func NewAuthHandler(service *AuthService) *AuthHandler {
 	return &AuthHandler{
 		service: service,
-		store:   store,
 	}
 }
 
@@ -56,7 +54,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.store.SaveToken(w, r, token)
+	err = h.service.store.SaveToken(w, r, token)
 
 	if err != nil {
 		http.Error(w, "Failed To Persist Token", http.StatusInternalServerError)
@@ -75,7 +73,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 	500
 // @Router /auth/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	if err := h.store.Clear(w, r); err != nil {
+	if err := h.service.store.Clear(w, r); err != nil {
 		http.Error(w, "Failed To Clear Session", http.StatusInternalServerError)
 		return
 	}

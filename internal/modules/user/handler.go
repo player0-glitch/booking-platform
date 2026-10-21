@@ -1,22 +1,21 @@
-package user
+package user /*provision guest*/
 
 import (
 	json "booking-platform/internal/json"
+	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
-
-	"errors"
 
 	chi "github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 )
 
-type UserController struct {
+type UserHandler struct {
 	userService IUserService
 }
 
-func NewUserController(userSvc IUserService) *UserController {
-	return &UserController{
+func NewUserController(userSvc IUserService) *UserHandler {
+	return &UserHandler{
 		userService: userSvc,
 	}
 }
@@ -29,7 +28,7 @@ func NewUserController(userSvc IUserService) *UserController {
 // @Success 	201
 // @Failure		403
 // @Router		/users	[post]
-func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createUserRequest
 	//parse the json request
 	errJsonDecoder = json.Reader(r, &req)
@@ -38,7 +37,7 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 		json.RequestErrorHandler(w, errJsonDecoder)
 		return
 	}
-	user, errSvc := c.userService.CreateUser(r.Context(), req.FirstName, req.LastName, req.Email, req.Password)
+	user, errSvc := h.userService.CreateUser(r.Context(), req.FirstName, req.LastName, req.Email, req.Password)
 
 	if errSvc != nil {
 		json.InternalErrorHandler(w, errors.New("Failed To Create User"))
@@ -54,15 +53,15 @@ func (c *UserController) Create(w http.ResponseWriter, r *http.Request) {
 // @Success 	200
 // @Failure		403
 // @Router		/users/all	[get]
-func (c *UserController) GetAll(w http.ResponseWriter, r *http.Request) {
-	users, err := c.userService.GetAll(r.Context())
+func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
+	users, err := h.userService.GetAll(r.Context())
 	if err != nil {
 		json.RequestErrorHandler(w, errors.New("Server Failed To Get All Users"))
 		return
 	}
 
 	if len(users) == 0 {
-		json.Write(w, http.StatusNotFound, "No Users")
+		json.Write(w, http.StatusNoContent, "No Users")
 		return
 	}
 	json.Write(w, http.StatusOK, users)
@@ -72,22 +71,28 @@ func (c *UserController) GetAll(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Summary		Retrieve user by id
 // @Tags		users
-// @Param id path int true "User Id"
+// @Param id path string true "User Id" format(uuid)
 // @Produce		json
 // @Success 	202	{object} userRequest
 // @Failure		403
 // @Failure		404
 // @Router		/users/{id}	[get]
-func (c *UserController) GetById(w http.ResponseWriter, r *http.Request) {
+func (c *UserHandler) GetById(w http.ResponseWriter, r *http.Request) {
 
-	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
+	id := chi.URLParam(r, "id")
+	userId, errParse := uuid.Parse(id)
+
 	if errParse != nil {
 		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	user, errSvc := c.userService.GetById(r.Context(), uint(id))
+
+	user, errSvc := c.userService.GetById(r.Context(), userId)
+
 	if errSvc != nil {
-		json.WriteError(w, http.StatusNotFound, fmt.Sprintf("User with id=%d not found", id))
+		json.WriteError(w, http.StatusNotFound,
+			fmt.Sprintf("User with id = %s not found",
+				id))
 		return
 	}
 
@@ -98,19 +103,22 @@ func (c *UserController) GetById(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Summary		Delete user by id
 // @Tags		users
-// @Param request path int true "User Id"
+// @Param request path string true "User Id" format(uuid)
 // @Produce		json
 // @Success 	200	{object} userRequest
 // @Failure		403
 // @Failure 	404
 // @Router		/users/{id}	[delete]
-func (c *UserController) DeleteById(w http.ResponseWriter, r *http.Request) {
-	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
+func (c *UserHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	userId, errParse := uuid.Parse(id)
+
 	if errParse != nil {
 		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	err := c.userService.DeleteById(r.Context(), uint(id))
+	err := c.userService.DeleteById(r.Context(), userId)
 	if err != nil {
 		json.WriteError(w, http.StatusNotFound, "User Not found")
 		return
@@ -122,19 +130,21 @@ func (c *UserController) DeleteById(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Summary		Solf delete user by id
 // @Tags		users
-// @Param request path int true "User Id"
+// @Param request path string true "User Id" format (uuid)
 // @Produce		json
 // @Success 	200	{object} userRequest
 // @Failure		403
 // @Failure 	404
 // @Router		/users/{id}/soft	[delete]
-func (c *UserController) SoftDeleteById(w http.ResponseWriter, r *http.Request) {
-	id, errParse := strconv.Atoi(chi.URLParam(r, "id"))
+func (c *UserHandler) SoftDeleteById(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	userId, errParse := uuid.Parse(id)
+
 	if errParse != nil {
 		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	err := c.userService.SoftDelete(r.Context(), uint(id))
+	err := c.userService.SoftDelete(r.Context(), userId)
 	if err != nil {
 		json.WriteError(w, http.StatusNotFound, "User Not found")
 		return
@@ -142,10 +152,38 @@ func (c *UserController) SoftDeleteById(w http.ResponseWriter, r *http.Request) 
 	json.Write(w, http.StatusAccepted, "User Deleted Softly")
 }
 
-func (c *UserController) ChangeUserRole(w http.ResponseWriter, r *http.Request) {
+// User godoc
+// @Security	BearerAuth
+// @Summary		Get Users by role
+// @Tags		users
+// @Param rolename path string true "Role Name"
+// @Produce		json
+// @Success 	200
+// @Failure		403
+// @Failure 	404
+// @Router		/users/{rolename}	[get]
+func (h *UserHandler) GetUsersByRole(w http.ResponseWriter, r *http.Request) {
+	rolename := chi.URLParam(r, "rolename")
+
+	users, err := h.userService.GetUsersByRole(r.Context(), rolename)
+	if err != nil {
+		json.WriteError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if len(users) == 0 {
+		json.Write(w, http.StatusNoContent, "No Users For Give Role")
+		return
+	}
+
+	json.Write(w, http.StatusOK, users)
+}
+
+func (h *UserHandler) ChangeUserRole(w http.ResponseWriter, r *http.Request) {
 	json.WriteError(w, http.StatusInternalServerError, "Not Yet Implemented")
 }
 
-func (c *UserController) RevokeRole(w http.ResponseWriter, r *http.Request) {
+/* Unecessary */
+func (h *UserHandler) RevokeRole(w http.ResponseWriter, r *http.Request) {
 	json.WriteError(w, http.StatusInternalServerError, "Not Yet Implemented")
 }

@@ -1,8 +1,10 @@
 package auth
 
 import (
+	"booking-platform/internal/core"
 	"context"
 	"errors"
+	"net/http"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -17,13 +19,15 @@ var (
 type AuthService struct {
 	jwtSecret  []byte
 	userReader UserReader //Contract that reads from the user
+	store      *StoreManager
 }
 
-func NewAuthService(userReader UserReader, jwtSecret []byte) *AuthService {
+func NewAuthService(userReader UserReader, jwtSecret []byte, storeManager *StoreManager) *AuthService {
 
 	return &AuthService{
 		jwtSecret:  jwtSecret,
 		userReader: userReader,
+		store:      storeManager,
 	}
 }
 
@@ -51,7 +55,6 @@ func (s *AuthService) Authenticate(ctx context.Context, email, password string) 
 		Role: user.Role,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
 	return token.SignedString(s.jwtSecret)
 }
 
@@ -81,4 +84,30 @@ func (s *AuthService) checkPassword(password, hash string) bool {
 		return false
 	}
 	return true
+}
+
+func (s *AuthService) CreateProvisionGuest(r *http.Request, w http.ResponseWriter) (*Claims, error) {
+	user, err := s.userReader.ProvisionGuest(r.Context())
+	if err != nil {
+		return nil, err
+	}
+	claims := &Claims{
+		UserId: user.Id,
+		Role: UserRole{
+			Id:   core.RoleGuestID,
+			Name: string(core.RoleGuest),
+		},
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt://Guests get max 24 hour access
+			jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			IssuedAt: jwt.NewNumericDate(time.Now()),
+		},
+	}
+	//create guest token and save to store
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	//very unlikely to fail
+	tokenStr, _ := token.SignedString(s.jwtSecret)
+	s.store.SaveToken(w, r, tokenStr)
+
+	return claims, nil
 }
