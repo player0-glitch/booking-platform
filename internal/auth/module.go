@@ -25,7 +25,8 @@ func (m *Module) Name() string {
 func NewModule(params ModuleParams) *Module {
 	//AuthService implements Authenticate that authenticator uses
 	store := NewStoreManager([]byte(params.JwtSecret), "app_session")
-	svc := NewAuthService(params.UserReader, []byte(params.JwtSecret), store)
+	passwordRepo := NewPasswordRepository(*params.DB)
+	svc := NewAuthService(params.UserReader, []byte(params.JwtSecret), store, passwordRepo)
 	return &Module{
 		service: svc,
 		store:   store,
