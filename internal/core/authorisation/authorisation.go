@@ -1,27 +1,32 @@
-package auth
+package authorisation
 
 import (
 	"booking-platform/internal/core"
 	"context"
 	"net/http"
-
-	"github.com/google/uuid"
 )
 
-type authenticatedUser struct {
-	id   uuid.UUID
-	role UserRole //defined as a type in auth service file
-}
+// contextKey defined in context.go in this package
 type contextKey string
 
-const authenticatedUserKey contextKey = "authenticated_user"
+const UserContextKey contextKey = "user_claims"
 
-func UserFromContext(ctx context.Context) (authenticatedUser, bool) {
-	user, ok := ctx.Value(authenticatedUserKey).(authenticatedUser)
-	return user, ok
+type Principal struct {
+	UserID string
+	Role   core.Role
 }
 
-// This is the middleware that handle authorisation
+func WithPrincipal(ctx context.Context, principal Principal) context.Context {
+	return context.WithValue(ctx, UserContextKey, principal)
+}
+
+func PrincipalFromContext(ctx context.Context) (Principal, bool) {
+	p, ok := ctx.Value(UserContextKey).(Principal)
+	return p, ok
+}
+
+// godoc
+// shared method to enfore Gates on endpoints for authorisation
 func RequiredRoles(allowedRoles ...core.Role) func(http.Handler) http.Handler {
 	//make a map of role (a string of role names based on the Role structs passed in)
 	allowed := make(map[core.Role]struct{}, len(allowedRoles))
@@ -31,12 +36,13 @@ func RequiredRoles(allowedRoles ...core.Role) func(http.Handler) http.Handler {
 	}
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			user, ok := UserFromContext(r.Context())
+			principal, ok := PrincipalFromContext(r.Context())
 			if !ok {
 				http.Error(w, "Unauthorised User", http.StatusUnauthorized)
 				return
 			}
-			if _, ok := allowed[core.Role(user.role.Name)]; ok {
+
+			if _, ok := allowed[principal.Role]; ok {
 				next.ServeHTTP(w, r)
 				return
 			}

@@ -1,8 +1,8 @@
 package user
 
 import (
-	"booking-platform/internal/auth"
 	"booking-platform/internal/core"
+	"booking-platform/internal/core/authorisation"
 	"net/http"
 
 	chi "github.com/go-chi/chi/v5"
@@ -11,9 +11,8 @@ import (
 
 type Middleware func(http.Handler) http.Handler
 
-// Module Structure it self
 type Module struct {
-	userService    IUserService
+	userService    UserServiceInterface
 	userHandler    *UserHandler
 	authMiddleware *Middleware
 }
@@ -23,8 +22,8 @@ func (m *Module) Name() string {
 	return "user module"
 }
 
-// Any external dependencies (like from the core app) needed by
-// this module
+// Any externel dependencies (like from the core app) needed by
+// this modulei
 type ModuleParams struct {
 	DB             *gorm.DB
 	AuthMiddleware Middleware
@@ -56,17 +55,19 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 			r.Use(*m.authMiddleware)
 
 			//Define the roles required by these routes
-			r.Use(auth.RequiredRoles(
+			r.Use(authorisation.RequiredRoles(
 				core.RoleAdmin,
-				core.RoleGuest, /*provision guest*/
-				core.RoleCustomer))
+				core.RoleCustomer, /*provision guest*/
+				core.RoleGuest))
 			r.Get("/{id}", m.userHandler.GetById)
 		})
 		//Should fallback to Provisioning a Guest User
 		r.Get("/{rolename}", m.userHandler.GetUsersByRole)
 
 		r.Group(func(r chi.Router) {
-			r.Use(auth.RequiredRoles(core.RoleAdmin))
+			r.Use(*m.authMiddleware)
+
+			r.Use(authorisation.RequiredRoles(core.RoleSuperAdmin, core.RoleAdmin))
 			// r.Post("/", m.userHandler.Create)
 			r.Delete("/{id}", m.userHandler.DeleteById)
 			r.Delete("/{id}/soft", m.userHandler.SoftDeleteById)

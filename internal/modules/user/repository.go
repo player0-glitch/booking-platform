@@ -57,19 +57,15 @@ func (r *UserRepository) CreateWithRole(ctx context.Context, user *User, roleId 
 	}
 	return r.dbContext.Create(user).Error
 }
-func (r *UserRepository) SeedUserIfNotExist(ctx context.Context, user *User, roleId int) (bool, error) {
+func (r *UserRepository) SeedUserIfNotExist(ctx context.Context, user *User, roleId int) error {
 	var role Role
 	err := r.dbContext.WithContext(ctx).Where("role_name = ?", &role, roleId).Error
 	if err != nil {
-		return false, fmt.Errorf("%w: %w", gorm.ErrRecordNotFound, err)
+		return fmt.Errorf("%w: %w", gorm.ErrRecordNotFound, err)
 	}
-	result := r.dbContext.Clauses(clause.OnConflict{DoNothing: true}).Create(user)
-	if result.Error != nil {
-		//Row has been used
-		return false, result.Error
-	}
+	result := r.dbContext.WithContext(ctx).Clauses(clause.OnConflict{DoNothing: true}).Create(user)
 	//on a conflict nothing is injected into the result.RowsAffected
-	return result.RowsAffected == 1, nil
+	return result.Error
 }
 
 func (r *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*User, error) {
@@ -123,6 +119,7 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]User, error) {
 // Permanently delete by id but i might need to not use this
 func (r *UserRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
 	var user User
+
 	return r.dbContext.Unscoped().WithContext(ctx).Delete(&user, id).Error
 }
 
@@ -151,6 +148,10 @@ func (r *UserRepository) ProvisionGuest(ctx context.Context) (*User, error) {
 	return user, err
 }
 
+func (r *UserRepository) BatchSeedUser(ctx context.Context, users []User) error {
+	return r.dbContext.WithContext(ctx).Clauses(clause.
+		OnConflict{DoNothing: true}).Create(users).Error
+}
 func (r *rolesRepo) ChangeUserRole(ctx context.Context, user *User, role *Role) error {
 	roles := make([]Role, 0, 1)
 	//for now each user only has 1 role

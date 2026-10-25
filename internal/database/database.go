@@ -12,6 +12,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 // Service represents a service that interacts with a database.
@@ -59,7 +60,17 @@ func New() (Service, error) {
 	var initError error
 	// Reuse Connection
 	dbOnce.Do(func() {
-
+		logs := logger.New(
+			log.New(os.Stdout, "\r\n", log.LstdFlags),
+			logger.Config{
+				//show all db queries slower than 200ms
+				SlowThreshold:             time.Millisecond * 200,
+				LogLevel:                  logger.Info,
+				IgnoreRecordNotFoundError: true,
+				ParameterizedQueries:      true, //Don't include params in SQL logs
+				Colorful:                  true,
+			},
+		)
 		//sslmode should not be disabled in prod
 		dsn := fmt.Sprintf("host=%s user=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
 			db_host,
@@ -67,7 +78,7 @@ func New() (Service, error) {
 			db_name,
 			db_port)
 
-		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logs})
 
 		if err != nil {
 			// This will not be a connection error, but a DSN parse error or

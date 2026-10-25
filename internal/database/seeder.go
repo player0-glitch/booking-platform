@@ -2,7 +2,7 @@ package database
 
 import (
 	"booking-platform/internal/core"
-	"booking-platform/internal/modules/user"
+	user "booking-platform/internal/modules/user"
 	"context"
 	"fmt"
 	"os"
@@ -18,14 +18,11 @@ var (
 	guestPassword      = ""
 )
 
-type ISeeder interface {
-	SeedUserIfNotExist(context.Context, *user.User, int) (bool, error)
+type UserSeederInterface interface {
+	SeedUserIfNotExist(context.Context, *user.User, int) error
+	BatchSeedUser(context.Context, []user.User) error
 }
 
-//	type role struct {
-//		// Id       int
-//		RoleName core.Role
-//	}
 type seedUser struct {
 	FirstName   string
 	LastName    string
@@ -34,10 +31,10 @@ type seedUser struct {
 	PasswordEnv string
 }
 type Seeder struct {
-	userRepo ISeeder
+	userRepo UserSeederInterface
 }
 
-func NewSeeder(userRepo ISeeder) *Seeder {
+func NewSeeder(userRepo UserSeederInterface) *Seeder {
 	return &Seeder{
 		userRepo: userRepo,
 	}
@@ -77,10 +74,10 @@ func SeedUsers(ctx context.Context, userRepo user.UserRepository) error {
 		hashes[s.PasswordEnv] = string(b)
 	}
 
-	// insert into db
-	for _, s := range userSeeds {
+	userToInsert := make([]user.User, len(userSeeds))
+	for i, s := range userSeeds {
 		hash := hashes[s.PasswordEnv]
-		u := &user.User{
+		u := user.User{
 			FirstName:    s.FirstName,
 			LastName:     s.LastName,
 			Email:        s.Email,
@@ -88,12 +85,12 @@ func SeedUsers(ctx context.Context, userRepo user.UserRepository) error {
 			RoleId:       s.RoleID,
 			// Role:         user.Role{Id: s.RoleID},
 		}
-		userRepo.SeedUserIfNotExist(ctx, u, u.RoleId)
-
+		//n+1
+		userToInsert[i] = u
+		// userRepo.SeedUserIfNotExist(ctx, &u, u.RoleId)
+	}
+	if err := userRepo.BatchSeedUser(ctx, userToInsert); err != nil {
+		return fmt.Errorf("Failed To Seed Users: %v", err.Error())
 	}
 	return nil
-
 }
-
-// I think this is a generic
-// func prt[T any](v T) *T { return &v }

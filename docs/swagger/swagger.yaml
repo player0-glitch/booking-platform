@@ -1,10 +1,29 @@
 basePath: /
 definitions:
+  auth.emailRequest:
+    properties:
+      email:
+        type: string
+    type: object
   auth.loginRequest:
     properties:
       email:
         type: string
       password:
+        type: string
+    type: object
+  auth.passwordResetRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      token:
+        type: string
+    type: object
+  auth.tokenResponse:
+    properties:
+      token:
         type: string
     type: object
   user.createUserRequest:
@@ -58,9 +77,13 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Returns token object
           schema:
-            $ref: '#/definitions/auth.loginRequest'
+            $ref: '#/definitions/auth.tokenResponse'
+        "400":
+          description: Bad Request
+        "401":
+          description: Unauthorised
       summary: Login and return jwt
       tags:
       - auth
@@ -70,10 +93,56 @@ paths:
       - application/json
       responses:
         "200":
-          description: OK
+          description: Successfully Logged out
+        "401":
+          description: Unauthenticated
         "500":
           description: Internal Server Error
       summary: Logout and invalidate session and token
+      tags:
+      - auth
+  /auth/password:
+    post:
+      description: Reset password for any role but 'Guest'
+      parameters:
+      - description: Reset Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.passwordResetRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully Updated User Password
+        "403":
+          description: Forbidden
+      summary: Reset Recognised User Password
+      tags:
+      - auth
+  /auth/password/reset:
+    post:
+      description: Request for any role but 'Guest' to request password reset token
+      parameters:
+      - description: Password reset credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.emailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Returns Raw Reset Token
+          schema:
+            $ref: '#/definitions/auth.tokenResponse'
+        "400":
+          description: Bad Request
+        "403":
+          description: Forbidden
+      summary: Request password reset token
       tags:
       - auth
   /users:
@@ -101,16 +170,12 @@ paths:
       - description: User Id
         format: uuid
         in: path
-        name: request
+        name: id
         required: true
         type: string
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/user.userRequest'
         "403":
           description: Forbidden
         "404":
@@ -149,7 +214,7 @@ paths:
       parameters:
       - description: User Id
         in: path
-        name: request
+        name: id
         required: true
         type: string
       produces:
@@ -159,6 +224,8 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/user.userRequest'
+        "204":
+          description: No Content
         "403":
           description: Forbidden
         "404":

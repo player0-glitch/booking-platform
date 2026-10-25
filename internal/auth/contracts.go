@@ -8,14 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type storeManager interface {
+type storeManagerInterface interface {
 	SaveToken(w http.ResponseWriter, r *http.Request, token string) error
 	Clear(w http.ResponseWriter, r *http.Request) error
-}
-
-type UserRole struct {
-	Id   core.RoleID
-	Name string
 }
 
 // User struct with the attributes expected byt the Auth Domain
@@ -24,11 +19,12 @@ type AuthUser struct {
 	Id           uuid.UUID
 	Email        string
 	PasswordHash string
-	Role         UserRole
+	Role         core.Role
+	RoleID       core.RoleID
 }
 
 // Contract that the Auth Domain expect to read from the User Domain
-type UserReader interface {
+type UserReaderInterface interface {
 	GetByEmailWithRoles(context.Context, string) (*AuthUser, error)
 	ProvisionGuest(ctx context.Context) (*AuthUser, error)
 }

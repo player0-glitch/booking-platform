@@ -14,26 +14,13 @@ var (
 	ErrUserNotFound = errors.New("User Not Found")
 )
 
-// public beyond the user package
-// User Service authinterface, implicity implemented by userService
-type IUserService interface {
-	CreateUser(ctx context.Context, name, lastName, email, password string) (*userRequest, error)
-	GetByEmail(ctx context.Context, email string) (*userRequest, error)
-	GetById(ctx context.Context, id uuid.UUID) (*userRequest, error)
-	SoftDelete(ctx context.Context, id uuid.UUID) error
-	DeleteById(ctx context.Context, id uuid.UUID) error
-	GetAll(ctx context.Context) ([]userRequest, error)
-	CreateUserWithRole(ctx context.Context, name, lastName, email, password string, roleId int) (*userRequest, error)
-	GetUsersByRole(ctx context.Context, roleName string) ([]userRequest, error)
-}
-
 // Concrete implementation of IUserService private to the user package
 type userService struct {
 	userRepo  UserRepository
-	rolesRepo RolesRepository
+	rolesRepo RolesRepoInterface
 }
 
-func NewUserService(userRepository UserRepository, rolesRepository RolesRepository) *userService {
+func NewUserService(userRepository UserRepository, rolesRepository RolesRepoInterface) *userService {
 	return &userService{
 		userRepo:  userRepository,
 		rolesRepo: rolesRepository,
@@ -42,7 +29,7 @@ func NewUserService(userRepository UserRepository, rolesRepository RolesReposito
 
 func (u *userService) CreateUser(ctx context.Context, name, lastName, email, password string) (*userRequest, error) {
 
-	passwordHash, err := u.hashPassword(password)
+	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return nil, fmt.Errorf("Password hashing failed: %w", err)
 	}
@@ -51,6 +38,10 @@ func (u *userService) CreateUser(ctx context.Context, name, lastName, email, pas
 		FirstName:    name,
 		LastName:     lastName,
 		PasswordHash: passwordHash,
+		RoleId:       int(core.RoleCustomerID),
+		Role: Role{Id: int(core.RoleCustomerID),
+			RoleName: string(core.RoleCustomer),
+		},
 	}
 	notFoundError := u.userRepo.Create(ctx, user)
 	if notFoundError != nil {
@@ -61,7 +52,7 @@ func (u *userService) CreateUser(ctx context.Context, name, lastName, email, pas
 }
 
 func (u *userService) CreateUserWithRole(ctx context.Context, name, lastName, email, password string, roleId int) (*userRequest, error) {
-	passwordHash, err := u.hashPassword(password)
+	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return nil, fmt.Errorf("Password hashing failed: %w", err)
 	}
@@ -146,7 +137,7 @@ func (s *userService) GetAll(ctx context.Context) ([]userRequest, error) {
 	return reqs, nil
 }
 
-func (s *userService) hashPassword(password string) (string, error) {
+func hashPassword(password string) (string, error) {
 	//automatic salt generation happens under the hood
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {

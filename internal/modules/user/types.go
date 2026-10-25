@@ -4,6 +4,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// Reponse types for User Handler
+type deletedUserResponse struct {
+	Id uuid.UUID `json:"id" swaggertype:"string" format:"uuid"`
+}
+
+// Request types for User Handler
 type createUserRequest struct {
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`

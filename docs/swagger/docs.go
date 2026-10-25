@@ -38,10 +38,16 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "OK",
+                        "description": "Returns token object",
                         "schema": {
-                            "$ref": "#/definitions/auth.loginRequest"
+                            "$ref": "#/definitions/auth.tokenResponse"
                         }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "401": {
+                        "description": "Unauthorised"
                     }
                 }
             }
@@ -57,10 +63,81 @@ const docTemplate = `{
                 "summary": "Logout and invalidate session and token",
                 "responses": {
                     "200": {
-                        "description": "OK"
+                        "description": "Successfully Logged out"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
                     },
                     "500": {
                         "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/auth/password": {
+            "post": {
+                "description": "Reset password for any role but 'Guest'",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Reset Recognised User Password",
+                "parameters": [
+                    {
+                        "description": "Reset Credentials",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.passwordResetRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully Updated User Password"
+                    },
+                    "403": {
+                        "description": "Forbidden"
+                    }
+                }
+            }
+        },
+        "/auth/password/reset": {
+            "post": {
+                "description": "Request for any role but 'Guest' to request password reset token",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Request password reset token",
+                "parameters": [
+                    {
+                        "description": "Password reset credentials",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.emailRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns Raw Reset Token",
+                        "schema": {
+                            "$ref": "#/definitions/auth.tokenResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request"
+                    },
+                    "403": {
+                        "description": "Forbidden"
                     }
                 }
             }
@@ -171,18 +248,12 @@ const docTemplate = `{
                         "type": "string",
                         "format": "uuid",
                         "description": "User Id",
-                        "name": "request",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.userRequest"
-                        }
-                    },
                     "403": {
                         "description": "Forbidden"
                     },
@@ -210,7 +281,7 @@ const docTemplate = `{
                     {
                         "type": "string",
                         "description": "User Id",
-                        "name": "request",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
@@ -221,6 +292,9 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/user.userRequest"
                         }
+                    },
+                    "204": {
+                        "description": "No Content"
                     },
                     "403": {
                         "description": "Forbidden"
@@ -269,6 +343,14 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "auth.emailRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                }
+            }
+        },
         "auth.loginRequest": {
             "type": "object",
             "properties": {
@@ -276,6 +358,28 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.passwordResetRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "auth.tokenResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
                     "type": "string"
                 }
             }

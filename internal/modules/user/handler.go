@@ -1,20 +1,31 @@
 package user /*provision guest*/
 
 import (
-	json "booking-platform/internal/json"
+	json "booking-platform/internal/core/json"
 	"errors"
 	"fmt"
 	"net/http"
+
+	"context"
 
 	chi "github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-type UserHandler struct {
-	userService IUserService
+type UserServiceInterface interface {
+	GetUsersByRole(ctx context.Context, roleName string) ([]userRequest, error)
+	CreateUser(ctx context.Context, name, lastName, email, password string) (*userRequest, error)
+	GetAll(ctx context.Context) ([]userRequest, error)
+	GetById(ctx context.Context, id uuid.UUID) (*userRequest, error)
+	DeleteById(ctx context.Context, id uuid.UUID) error
+	SoftDelete(ctx context.Context, id uuid.UUID) error
 }
 
-func NewUserController(userSvc IUserService) *UserHandler {
+type UserHandler struct {
+	userService UserServiceInterface
+}
+
+func NewUserController(userSvc UserServiceInterface) *UserHandler {
 	return &UserHandler{
 		userService: userSvc,
 	}
@@ -103,19 +114,20 @@ func (c *UserHandler) GetById(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Summary		Delete user by id
 // @Tags		users
-// @Param request path string true "User Id" format(uuid)
+// @Param id path string true "User Id" format(uuid)
 // @Produce		json
-// @Success 	200	{object} userRequest
+// @Sucess 		204
 // @Failure		403
 // @Failure 	404
 // @Router		/users/{id}	[delete]
 func (c *UserHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-
+	fmt.Printf("Id before parse: %s\n", id)
 	userId, errParse := uuid.Parse(id)
 
+	fmt.Printf("Parsed Id: %s\n", userId)
 	if errParse != nil {
-		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
+		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id "+errParse.Error())
 		return
 	}
 	err := c.userService.DeleteById(r.Context(), userId)
@@ -130,9 +142,10 @@ func (c *UserHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 // @Security	BearerAuth
 // @Summary		Solf delete user by id
 // @Tags		users
-// @Param request path string true "User Id" format (uuid)
+// @Param id path string true "User Id" format (uuid)
 // @Produce		json
 // @Success 	200	{object} userRequest
+// @Success 	204
 // @Failure		403
 // @Failure 	404
 // @Router		/users/{id}/soft	[delete]
@@ -180,10 +193,5 @@ func (h *UserHandler) GetUsersByRole(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) ChangeUserRole(w http.ResponseWriter, r *http.Request) {
-	json.WriteError(w, http.StatusInternalServerError, "Not Yet Implemented")
-}
-
-/* Unecessary */
-func (h *UserHandler) RevokeRole(w http.ResponseWriter, r *http.Request) {
 	json.WriteError(w, http.StatusInternalServerError, "Not Yet Implemented")
 }

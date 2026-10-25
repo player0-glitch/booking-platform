@@ -6,19 +6,7 @@ import (
 	"time"
 )
 
-// should be onto core module
-type ErrorResponse struct {
-	Code    int64  `json:"status"`
-	Message string `json:"message"`
-}
-
-type loginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-type loginResponse struct {
-	Token string `json:"token"`
-}
+// Json Requests This packages requires/uses
 
 // godoc
 // object that will be used track of account lock out
@@ -53,7 +41,11 @@ func (s *concurrentLoginAttemptStore) GetOrAdd(email string) *loginAttempInfo {
 	info, exists := s.data[key]
 	if !exists {
 		//info don't exists, add to the store
-		info = &loginAttempInfo{}
+		info = &loginAttempInfo{
+			lockoutEnd:    time.Now(),
+			attempts:      1,
+			requiresReset: false,
+		}
 		s.data[key] = info
 	}
 

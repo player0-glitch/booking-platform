@@ -67,8 +67,8 @@ func main() {
 	// be dependent on by what's at the bottom
 	fmt.Println("Registering Modules")
 	authModule := auth.NewModule(auth.ModuleParams{
-		JwtSecret:  jwtSecret,
-		UserReader: fulfillAuthUserContract(jwtSecret, databaseContext),
+		JwtSecret:           jwtSecret,
+		UserReaderInterface: fulfillAuthUserContract(jwtSecret, databaseContext),
 	})
 	userModule := user.NewModule(user.ModuleParams{
 		DB:             databaseContext.DB(),
@@ -117,7 +117,7 @@ func main() {
 
 // Find a better way to bind these contracts
 // Fullfil the contract that the Auth & User module agree on.
-// Auth module wants a UserReader with GetByEmailWithRoles and defines the contract
+// Auth module wants a UserReaderInterface with GetByEmailWithRoles and defines the contract
 // UserRepository implements the interface/contract
 func fulfillAuthUserContract(jwtSecret string, db database.Service) *adapters.UserAdapter {
 	userRepo := user.NewUserRepo(db.DB())

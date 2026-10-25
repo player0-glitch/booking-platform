@@ -1,22 +1,24 @@
-// Validation Middleware lives here
 package auth
 
 import (
-	"context"
+	"booking-platform/internal/core"
+	"booking-platform/internal/core/authorisation"
 	"net/http"
 
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
+type authenticatedUser struct {
+	id   uuid.UUID
+	role core.Role //defined as a type in auth service file
+}
 type Claims struct {
-	UserId uuid.UUID `json:"user_id"`
-	Role   UserRole  `json:"role"`
+	UserId uuid.UUID   `json:"user_id"`
+	Role   core.Role   `json:"role"`
+	RoleID core.RoleID `json:"role_id"`
 	jwt.RegisteredClaims
 }
-
-// contextKey defined in context.go in this package
-const UserContextKey contextKey = "user_claims"
 
 // godoc
 // Authentication Layer using jwt Tokens from claims
@@ -48,11 +50,17 @@ func (m *Module) AuthMiddlware(next http.Handler) http.Handler {
 		// 	return
 		// }
 
-		authUser := authenticatedUser{
-			id:   claims.UserId,
-			role: claims.Role,
+		// authUser := authenticatedUser{
+		// 	id:   claims.UserId,
+		// 	role: claims.Role,
+		// }
+
+		principal := authorisation.Principal{
+			UserID: claims.UserId.String(),
+			Role:   claims.Role,
 		}
-		ctx := context.WithValue(r.Context(), UserContextKey, authUser)
+		// ctx := context.WithValue(r.Context(), authorisation.UserContextKey, authUser)
+		ctx := authorisation.WithPrincipal(r.Context(), principal)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

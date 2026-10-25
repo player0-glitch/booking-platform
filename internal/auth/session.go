@@ -8,12 +8,12 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-type StoreManager struct {
+type storeManager struct {
 	store sessions.Store
 	name  string
 }
 
-func NewStoreManager(storeSecret []byte, name string) *StoreManager {
+func NewStoreManager(storeSecret []byte, name string) *storeManager {
 	cookieStore := sessions.NewCookieStore(storeSecret)
 	cookieStore.Options = &sessions.Options{
 		Path:     "/",
@@ -23,13 +23,13 @@ func NewStoreManager(storeSecret []byte, name string) *StoreManager {
 		SameSite: http.SameSiteLaxMode,
 	}
 
-	return &StoreManager{
+	return &storeManager{
 		store: cookieStore,
 		name:  name,
 	}
 }
 
-func (sm *StoreManager) GetToken(r *http.Request) (string, error) {
+func (sm *storeManager) GetToken(r *http.Request) (string, error) {
 	session, err := sm.store.Get(r, sm.name)
 	if err != nil {
 		return "", err
@@ -41,7 +41,7 @@ func (sm *StoreManager) GetToken(r *http.Request) (string, error) {
 	return token, nil
 }
 
-func (sm *StoreManager) Clear(w http.ResponseWriter, r *http.Request) error {
+func (sm *storeManager) Clear(w http.ResponseWriter, r *http.Request) error {
 	session, err := sm.store.Get(r, sm.name)
 	if err != nil {
 		return err
@@ -50,7 +50,7 @@ func (sm *StoreManager) Clear(w http.ResponseWriter, r *http.Request) error {
 	return session.Save(r, w)
 }
 
-func (sm *StoreManager) SaveToken(w http.ResponseWriter, r *http.Request,
+func (sm *storeManager) SaveToken(w http.ResponseWriter, r *http.Request,
 	token string) error {
 	session, err := sm.store.Get(r, sm.name)
 	if err != nil {
@@ -62,7 +62,7 @@ func (sm *StoreManager) SaveToken(w http.ResponseWriter, r *http.Request,
 }
 
 // these are my older Get and Set implementations
-func (sm *StoreManager) Get(w http.ResponseWriter, r *http.Request, key string) (any, error) {
+func (sm *storeManager) Get(w http.ResponseWriter, r *http.Request, key string) (any, error) {
 	store, err := sm.store.Get(r, sm.name)
 
 	val, ok := store.Values[key]
@@ -72,7 +72,7 @@ func (sm *StoreManager) Get(w http.ResponseWriter, r *http.Request, key string) 
 	return val, err
 }
 
-func (sm *StoreManager) Set(w http.ResponseWriter, r *http.Request, key, val string) error {
+func (sm *storeManager) Set(w http.ResponseWriter, r *http.Request, key, val string) error {
 	store, err := sm.store.Get(r, sm.name)
 	if err != nil {
 		return errors.New("Failed To Save The Key In The Store")
@@ -81,7 +81,7 @@ func (sm *StoreManager) Set(w http.ResponseWriter, r *http.Request, key, val str
 	return store.Save(r, w)
 }
 
-func (s *StoreManager) Delete(w http.ResponseWriter, r *http.Request, key string) error {
+func (s *storeManager) Delete(w http.ResponseWriter, r *http.Request, key string) error {
 	store, _ := s.store.Get(r, s.name)
 	delete(store.Values, key)
 	return store.Save(r, w)

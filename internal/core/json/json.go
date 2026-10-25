@@ -24,14 +24,14 @@ func Write(w http.ResponseWriter, status int, data any) {
 
 // Should json decoding of a request fail, provide an error as a message
 func WriteError(w http.ResponseWriter, status int, message string) {
-	error := ErrorResponse{
+	errResponse := ErrorResponse{
 		Code:    status,
 		Message: message,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	json.NewEncoder(w).Encode(error)
+	json.NewEncoder(w).Encode(errResponse)
 }
 func Reader(r *http.Request, data any) error {
 	decoder := json.NewDecoder(r.Body)

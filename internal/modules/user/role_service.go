@@ -8,11 +8,15 @@ import (
 	Logger "github.com/sirupsen/logrus"
 )
 
+type RolesRepoInterface interface {
+	RemoveRoleFromUser(ctx context.Context, user *User, role *Role) error
+	ChangeUserRole(ctx context.Context, user *User, role *Role) error
+}
 type rolesService struct {
-	roleRepo RolesRepository
+	roleRepo RolesRepoInterface
 }
 
-func NewRolesService(r RolesRepository) *rolesService {
+func NewRolesService(r RolesRepoInterface) *rolesService {
 	return &rolesService{
 		roleRepo: r,
 	}
@@ -44,13 +48,4 @@ func (s *rolesService) ChangeUserRole(ctx context.Context, dto *userRequest, rol
 func (s *rolesService) RemoveRoleFromUser(ctx context.Context,
 	user *userRequest, role core.Role) error {
 	return errors.New("Not Implemented")
-}
-func (s *rolesService) clearRoles(u *userRequest) {
-	if u == nil {
-		return
-	}
-	//zero out all the elements
-	// clear(u.Roles)
-	//reslice length back to 0 for efficiency
-	// u.Roles = u.Roles[:0]
 }
