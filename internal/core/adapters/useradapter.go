@@ -2,7 +2,6 @@ package adapters
 
 import (
 	"booking-platform/internal/auth"
-	"booking-platform/internal/core"
 	"booking-platform/internal/modules/user"
 	"context"
 )
@@ -17,34 +16,15 @@ func NewUserAdapter(userRepo *user.UserRepository) *UserAdapter {
 	}
 }
 
-func (a *UserAdapter) ProvisionGuest(ctx context.Context) (*auth.AuthUser, error) {
-	userModel, err := a.userRepo.ProvisionGuest(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	authUser := &auth.AuthUser{
-		Id:           (userModel.Base.ID),
-		Email:        userModel.Email,
-		PasswordHash: userModel.PasswordHash,
-		Role:         core.Role(userModel.Role.RoleName),
-		RoleID:       core.RoleID(userModel.RoleId),
-	}
-
-	return authUser, nil
-}
-
-func (a *UserAdapter) GetByEmailWithRoles(ctx context.Context, email string) (*auth.AuthUser, error) {
+func (a *UserAdapter) GetByEmail(ctx context.Context, email string) (*auth.AuthUser, error) {
 	userModel, err := a.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
 	authUser := &auth.AuthUser{
-		Id:     (userModel.Base.ID),
-		Email:  userModel.Email,
-		Role:   core.Role(userModel.Role.RoleName),
-		RoleID: core.RoleID(userModel.RoleId),
+		Id:    (userModel.Base.ID),
+		Email: *userModel.Email,
 	}
 
 	return authUser, nil

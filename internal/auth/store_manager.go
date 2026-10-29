@@ -1,4 +1,3 @@
-// Session Manager Wrapper
 package auth
 
 import (
@@ -8,81 +7,82 @@ import (
 	"github.com/gorilla/sessions"
 )
 
+var ErrTokenNotFound = errors.New("Session Token Not Found")
+
+const JWTTokenKey = "jwt_token"
+
 type storeManager struct {
-	store sessions.Store
-	name  string
+	session sessions.Store
+	//This
+	// store SessionManager
+	name string
 }
 
-func NewStoreManager(storeSecret []byte, name string) *storeManager {
-	cookieStore := sessions.NewCookieStore(storeSecret)
-	cookieStore.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   3600 * 2, /*lives for 2hrs*/
-		HttpOnly: true,
-		Secure:   false, /*set this to true in prod for HTTPS*/
-		SameSite: http.SameSiteLaxMode,
-	}
-
+func NewStoreManager(session sessions.Store, name string) *storeManager {
 	return &storeManager{
-		store: cookieStore,
-		name:  name,
+		session: session,
+		name:    name,
 	}
 }
 
 func (sm *storeManager) GetToken(r *http.Request) (string, error) {
-	session, err := sm.store.Get(r, sm.name)
+	session, err := sm.session.Get(r, sm.name)
 	if err != nil {
 		return "", err
 	}
-	token, ok := session.Values["jwt_token"].(string)
+	token, ok := session.Values[JWTTokenKey].(string)
 	if !ok || token == "" {
-		return "", errors.New("Session Token Not Found")
+		return "", ErrTokenNotFound
 	}
 	return token, nil
 }
 
 func (sm *storeManager) Clear(w http.ResponseWriter, r *http.Request) error {
-	session, err := sm.store.Get(r, sm.name)
+	session, err := sm.session.Get(r, sm.name)
 	if err != nil {
 		return err
 	}
 	session.Options.MaxAge = -1
-	return session.Save(r, w)
+	return sm.session.Save(r, w, session)
 }
 
 func (sm *storeManager) SaveToken(w http.ResponseWriter, r *http.Request,
 	token string) error {
-	session, err := sm.store.Get(r, sm.name)
+	session, err := sm.session.Get(r, sm.name)
 	if err != nil {
 		return err
 	}
-	session.Values["jwt_token"] = token
-
-	return session.Save(r, w)
+	session.Values[JWTTokenKey] = token
+	return sm.session.Save(r, w, session)
 }
 
 // these are my older Get and Set implementations
 func (sm *storeManager) Get(w http.ResponseWriter, r *http.Request, key string) (any, error) {
-	store, err := sm.store.Get(r, sm.name)
-
+	store, err := sm.session.Get(r, sm.name)
+	if err != nil {
+		return nil, err
+	}
 	val, ok := store.Values[key]
 	if !ok {
 		return nil, errors.New("Key Not Found In Store Session")
 	}
-	return val, err
+	return val, nil
 }
 
 func (sm *storeManager) Set(w http.ResponseWriter, r *http.Request, key, val string) error {
-	store, err := sm.store.Get(r, sm.name)
+	session, err := sm.session.Get(r, sm.name)
 	if err != nil {
 		return errors.New("Failed To Save The Key In The Store")
 	}
-	store.Values[key] = val
-	return store.Save(r, w)
+	session.Values[key] = val
+	return sm.session.Save(r, w, session)
 }
 
 func (s *storeManager) Delete(w http.ResponseWriter, r *http.Request, key string) error {
-	store, _ := s.store.Get(r, s.name)
-	delete(store.Values, key)
-	return store.Save(r, w)
+	session, err := s.session.Get(r, s.name)
+	if err != nil {
+		return err
+	}
+	delete(session.Values, key)
+	return s.session.Save(r, w, session)
 }

@@ -304,42 +304,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/users/{rolename}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Get Users by role",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Role Name",
-                        "name": "rolename",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Not Found"
-                    }
-                }
-            }
         }
     },
     "definitions": {

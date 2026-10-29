@@ -2,26 +2,33 @@ package user
 
 import (
 	"booking-platform/internal/core"
-	"time"
 
 	"gorm.io/gorm"
 )
 
+type AccountStatus string
+
+const (
+	AccountGuest      AccountStatus = "guest"
+	AccountRegistered AccountStatus = "registered"
+	AccountSuspended  AccountStatus = "suspended"
+)
+
+// godoc
+// A User is an identity on the platform,'who is this'. A guest is an anonymous user (imagine
+// A user DOES not have a role. Nullable options accommodate guest user
+// a potential customer walk in but they don't spend money)
 type User struct {
 	core.Base
-	FirstName    string `gorm:"not null"`
-	LastName     string `gorm:"not null"`
-	Email        string `gorm:"uniqueIndex;not null"`
-	PasswordHash string `gorm:"not null"`
+	FirstName     *string `gorm:"type:varchar(255)"`
+	LastName      *string `gorm:"type:varchar(255)"`
+	Email         *string `gorm:"type:varchar(255)"`
+	PasswordHash  *string
+	AccountStatus AccountStatus `gorm:"default:'registered'"`
 	//This is for earger loading in a joining query
-	RoleId int  `gorm:"not null;default:3"`
-	Role   Role `gorm:"foreignKey:RoleId"`
-}
-type Role struct {
-	Id        int
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	RoleName  string `gorm:"unique;not null" json:"role_name"`
-
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+func (User) TableName() string {
+	return "users"
 }

@@ -6,7 +6,6 @@ import (
 	"net/http"
 )
 
-// contextKey defined in context.go in this package
 type contextKey string
 
 const UserContextKey contextKey = "user_claims"

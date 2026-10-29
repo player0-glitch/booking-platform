@@ -7,12 +7,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"net/http"
 	"time"
 
 	"fmt"
 
-	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -30,9 +28,10 @@ type passwordRepoInterface interface {
 	CreateEntry(ctx context.Context, userId uuid.UUID, hash string, expiresAt time.Time) error
 	UpdatePasswordReset(ctx context.Context, hashPassword []byte, userID uuid.UUID) error
 }
+
 type AuthService struct {
-	jwtSecret    []byte
 	userReader   UserReaderInterface //Contract that reads from the user
+	jwt          jwtTokenValidator
 	store        *storeManager
 	passwordRepo passwordRepoInterface
 	//we search the user by their email
@@ -40,15 +39,16 @@ type AuthService struct {
 	transactor database.TransactorInterface
 }
 
-func NewAuthService(UserReaderInterface UserReaderInterface, jwtSecret []byte,
+func NewAuthService(
+	UserReaderInterface UserReaderInterface, jwtInterface jwtTokenValidator,
 	storeManager *storeManager, pr passwordRepoInterface,
 	trx database.TransactorInterface) *AuthService {
 
 	info := NewConcurrentLoginAttemptStore()
 
 	return &AuthService{
-		jwtSecret:    jwtSecret,
 		userReader:   UserReaderInterface,
+		jwt:          jwtInterface,
 		store:        storeManager,
 		loginInfo:    info,
 		passwordRepo: pr,
@@ -64,7 +64,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 		return "", fmt.Errorf("Provide an Email and Password")
 	}
 
-	user, err := s.userReader.GetByEmailWithRoles(ctx, email)
+	user, err := s.userReader.GetByEmail(ctx, email)
 	// could not get the user based on email
 	// put the error message in the string returned
 	if err != nil {
@@ -100,62 +100,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 
 	//successful login will remove you from the attempts store
 	s.loginInfo.Remove(user.Email)
-
-	claims := Claims{
-		UserId: user.Id,
-		// Email:  email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(2 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-		Role: user.Role,
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(s.jwtSecret)
-}
-
-func (s *AuthService) ValidateToken(tokenString string) (*Claims, error) {
-	token, err := jwt.ParseWithClaims(tokenString,
-		&Claims{}, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errInvalidToken
-			}
-			return s.jwtSecret, nil
-		})
-
-	if err != nil || !token.Valid {
-		return nil, errInvalidToken
-	}
-
-	claims, ok := token.Claims.(*Claims)
-	if !ok {
-		return nil, errInvalidToken
-	}
-	return claims, nil
-}
-
-func (s *AuthService) CreateProvisionGuest(r *http.Request, w http.ResponseWriter) (*Claims, error) {
-	user, err := s.userReader.ProvisionGuest(r.Context())
-	if err != nil {
-		return nil, err
-	}
-	claims := &Claims{
-		UserId: user.Id,
-		Role:   user.Role,
-
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt://Guests get max 24 hour access
-			jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt: jwt.NewNumericDate(time.Now()),
-		},
-	}
-	//create guest token and save to store
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	//very unlikely to fail
-	tokenStr, _ := token.SignedString(s.jwtSecret)
-	s.store.SaveToken(w, r, tokenStr)
-
-	return claims, nil
+	return s.jwt.CreateNewToken(user.Id)
 }
 
 // TODO Eventually remove string return

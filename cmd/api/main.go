@@ -62,7 +62,7 @@ func main() {
 			Logger.Printf("Failed To Close Database Connection: %v", err)
 		}
 	}()
-	jwtSecret := os.Getenv("SESSION_STORE_KEY")
+	jwtSecret := os.Getenv("JWT_SECRET")
 	//Initialise the modularized application in reverse order, what's on top must
 	// be dependent on by what's at the bottom
 	fmt.Println("Registering Modules")
@@ -72,9 +72,9 @@ func main() {
 	})
 	userModule := user.NewModule(user.ModuleParams{
 		DB:             databaseContext.DB(),
-		AuthMiddleware: authModule.AuthMiddlware,
+		AuthMiddleware: authModule.AppMiddleware.AuthMiddlware,
 	})
-	//Run anu seeder before the app starts
+	//Run any seeder before the app starts
 	runSeeders(context.Background(), databaseContext)
 
 	app, errAppStart := app.NewApplication(
@@ -126,5 +126,6 @@ func fulfillAuthUserContract(jwtSecret string, db database.Service) *adapters.Us
 
 func runSeeders(ctx context.Context, db database.Service) {
 	userRepo := user.NewUserRepo(db.DB())
-	database.SeedUsers(ctx, *userRepo)
+	seeder := database.NewSeeder(userRepo)
+	seeder.Seed(ctx)
 }

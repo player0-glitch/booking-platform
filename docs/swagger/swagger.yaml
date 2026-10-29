@@ -235,28 +235,6 @@ paths:
       summary: Solf delete user by id
       tags:
       - users
-  /users/{rolename}:
-    get:
-      parameters:
-      - description: Role Name
-        in: path
-        name: rolename
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-        "403":
-          description: Forbidden
-        "404":
-          description: Not Found
-      security:
-      - BearerAuth: []
-      summary: Get Users by role
-      tags:
-      - users
   /users/all:
     get:
       produces:

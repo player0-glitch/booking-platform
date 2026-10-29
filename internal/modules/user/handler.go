@@ -13,7 +13,6 @@ import (
 )
 
 type UserServiceInterface interface {
-	GetUsersByRole(ctx context.Context, roleName string) ([]userRequest, error)
 	CreateUser(ctx context.Context, name, lastName, email, password string) (*userRequest, error)
 	GetAll(ctx context.Context) ([]userRequest, error)
 	GetById(ctx context.Context, id uuid.UUID) (*userRequest, error)
@@ -165,33 +164,19 @@ func (c *UserHandler) SoftDeleteById(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusAccepted, "User Deleted Softly")
 }
 
-// User godoc
-// @Security	BearerAuth
-// @Summary		Get Users by role
-// @Tags		users
-// @Param rolename path string true "Role Name"
-// @Produce		json
-// @Success 	200
-// @Failure		403
-// @Failure 	404
-// @Router		/users/{rolename}	[get]
-func (h *UserHandler) GetUsersByRole(w http.ResponseWriter, r *http.Request) {
-	rolename := chi.URLParam(r, "rolename")
+// func (h *UserHandler) GetUsersByRole(w http.ResponseWriter, r *http.Request) {
+// 	rolename := chi.URLParam(r, "rolename")
 
-	users, err := h.userService.GetUsersByRole(r.Context(), rolename)
-	if err != nil {
-		json.WriteError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+// 	users, err := h.userService.GetUsersByRole(r.Context(), rolename)
+// 	if err != nil {
+// 		json.WriteError(w, http.StatusInternalServerError, err.Error())
+// 		return
+// 	}
 
-	if len(users) == 0 {
-		json.Write(w, http.StatusNoContent, "No Users For Give Role")
-		return
-	}
+// 	if len(users) == 0 {
+// 		json.Write(w, http.StatusNoContent, "No Users For Give Role")
+// 		return
+// 	}
 
-	json.Write(w, http.StatusOK, users)
-}
-
-func (h *UserHandler) ChangeUserRole(w http.ResponseWriter, r *http.Request) {
-	json.WriteError(w, http.StatusInternalServerError, "Not Yet Implemented")
-}
+// 	json.Write(w, http.StatusOK, users)
+// }
