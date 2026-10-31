@@ -3,6 +3,7 @@ package auth
 import (
 	"booking-platform/internal/core"
 	"booking-platform/internal/core/authorisation"
+	"context"
 	"net/http"
 
 	jwt "github.com/golang-jwt/jwt/v5"
@@ -81,7 +82,7 @@ func (am *AppMiddleware) AuthMiddlware(next http.Handler) http.Handler {
 
 // godoc
 // Ensures every visitor (especially anonymouse) has a temp database record and a valid session token
-func (am *AppMiddleware) Ensure(next http.Handler) http.Handler {
+func (am *AppMiddleware) EnsureAnonymous(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		session, err := am.sess.Get(r, am.name)
 		if err != nil {
@@ -105,4 +106,8 @@ func (am *AppMiddleware) Ensure(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+func (am *AppMiddleware) AnonymousTokenFromContext(ctx context.Context) (string, bool) {
+	token, ok := ctx.Value(anonymousKey).(string)
+	return token, ok && token != ""
 }

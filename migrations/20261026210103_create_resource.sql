@@ -8,8 +8,8 @@
 --              situation NOTE!  this may not get implemented
 -- 'capacity': maximum people booking to be part of a group
 -- ============================================
-CREATE IF NOT EXISTS resources (
-    id PRIMARY KEY DEFAULT uuidv7(),
+CREATE TABLE IF NOT EXISTS resources (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     organisation_id UUID NOT NULL REFERENCES organisations (id),
     kind TEXT NOT NULL,
     name TEXT NOT NULL,
@@ -19,9 +19,10 @@ CREATE IF NOT EXISTS resources (
     capacity INT NOT NULL DEFAULT 1 CHECK (capacity>=1),
     status TEXT NOT NULL DEFAULT 'active'
             CHECK (status in ('active','inactive')),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    UNIQUE (organisations_id,name)
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, 
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    UNIQUE (organisation_id,name)
 );
 
 -- +goose Down

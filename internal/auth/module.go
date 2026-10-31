@@ -13,6 +13,7 @@ import (
 var (
 	hashKeySecret  = os.Getenv("SESSION_KEY_SECRET")
 	blockKeySecret = os.Getenv("SESSION_BLOCK_SECRET")
+	jwtSecret      = os.Getenv("JWT_SECRET")
 )
 
 type Module struct {
@@ -22,8 +23,6 @@ type Module struct {
 	AppMiddleware *AppMiddleware
 }
 type ModuleParams struct {
-	JwtSecret           string
-	JwtService          *jwtService
 	DB                  *gorm.DB
 	UserReaderInterface UserReaderInterface //contract it expects to read from user
 	Transactor          database.TransactorInterface
@@ -45,17 +44,21 @@ func NewModule(params ModuleParams) *Module {
 		trx)
 	//Session Store Manager (interacts with DB)
 	store := NewStoreManager(session, "app_session")
+	//Instantiate JWT Service
+	jwtSvc := NewJWTService(jwtSecret)
 	//Password Repo Interface
 	passwordRepo := NewPasswordRepository(params.DB)
 	//User Service
 	svc := NewAuthService(
 		params.UserReaderInterface,
-		params.JwtService,
+		jwtSvc,
 		store,
 		passwordRepo,
 		trx)
+	//Create jwt service
+
 	//Lastly Create the AppMiddleware
-	appMW := NewAppMiddleware(store, "app_session", params.JwtService)
+	appMW := NewAppMiddleware(store, "app_session", jwtSvc)
 	return &Module{
 		service:       svc,
 		store:         store,

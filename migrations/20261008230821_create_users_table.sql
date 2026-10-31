@@ -10,10 +10,10 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     -- role_id INTEGER NOT NULL DEFAULT 3, -- Default to a 'Customer' role
-    deleted_at TIMESTAMPTZ NULL,
+    deleted_at TIMESTAMPTZ NULL
     --Foreign Key Constraints
-    CONSTRAINT users_account_status_check 
-        CHECK( account_status IN ('registered','suspended','guest'))
+    -- CONSTRAINT users_account_status_check 
+        -- CHECK( account_status IN ('registered','suspended','guest'))
 );
 
 -- Create index for deleted_at for gorm:index
@@ -28,5 +28,5 @@ CREATE UNIQUE INDEX uq_user_email_active ON users (LOWER(email))
 -- ============================================
 -- +goose Down
 DROP INDEX IF EXISTS idx_users_deleted_at;
-DROP UNIQUE INDEX IF EXISTS uq_user_email_active; 
+DROP INDEX IF EXISTS uq_user_email_active; 
 DROP TABLE IF EXISTS users;

@@ -1,4 +1,4 @@
--- +goose U
+-- +goose Up
 -- ============================================
 -- If a Resource is 'what/who' is being booked, a Service is for 'how long/
 -- for how much?'. This can be used for variable-length bookings
@@ -10,6 +10,12 @@
 -- 'buffer' -> cleanup time. THIS IS NOT CHARGED TO THE CUSTOMER
 -- 'requires_approval: some booking require confirmation or cancellation by
 -- the service provider
+-- 
+-- To accommodate all types of business,services have different rules
+-- (a haircut vs a 3hr consultation)
+-- 'min_notice_minutes': how far ahead a bookin must be made. Anytime closer must be denied
+-- 'max_advance_days': how far ahead into the future bookings are accepted
+-- 'change_cutoff_minutes': customers cannot cancel/reschedule closer than this start
 -- ============================================
 CREATE TABLE IF NOT EXISTS services (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
@@ -27,19 +33,24 @@ CREATE TABLE IF NOT EXISTS services (
         CHECK (buffer_before_minute >= 0),
     buffer_after_minute INT NOT NULL DEFAULT 0
         CHECK (buffer_after_minute>= 0),
-
+  
     -- this is supposed to represent money
     price_minor  INT NOT NULL DEFAULT 0 
-        CHECK (price >= 0),
+        CHECK (price_minor >= 0),
     pricing_unit TEXT NOT NULL DEFAULT 'per_booking'
-        CHECK(pricing_unit IN 'per_hour','per_booking')
+        CHECK(pricing_unit IN ('per_hour','per_booking')),
     currency CHAR(3) NOT NULL DEFAULT 'ZAR',
     requires_approval BOOLEAN NOT NULL DEFAULT false,
     status TEXT NOT NULL DEFAULT 'active'
-        CHECK(status IN 'active','inactive'),
-    
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        CHECK(status IN ('active','inactive')),
+    min_notice_minutes INT NOT NULL DEFAULT 0 
+      CHECK(min_notice_minutes>=0),
+max_advance_days INT NOT NULL DEFAULT 90 
+      CHECK (max_advance_days>=1),
+change_cutoff_minutes INT NOT NULL DEFAULT 0 
+      CHECK (change_cutoff_minutes>=0),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE(organisation_id,name),
 -- A service with a variable time needs bounds [start_time,end_time)
@@ -61,15 +72,16 @@ CONSTRAINT services_variable_needs_bounds
 -- This elimates duplicating a db service entry all because of a new price
 CREATE TABLE IF NOT EXISTS resource_services (
     resource_id UUID REFERENCES resources(id) ON DELETE CASCADE,
-    service_id  UUID REFERENCES services(id) ON DELETE CASCADE
+    service_id  UUID REFERENCES services(id) ON DELETE CASCADE,
     price_override_minor INT 
         CHECK( price_override_minor >= 0),
     PRIMARY KEY (resource_id,service_id)
 );
 -- PRIMARY KEY only covers 'the services for a resource'
 -- This covers "resources for a service"
-CREATE INDEX resource_services_service_idx ON resource_services (service_id);
+CREATE INDEX IF NOT EXISTS resource_services_service_idx ON resource_services (service_id);
 -- ============================================
 -- +goose Down
-DROP TABLE IF EXISTS services;
+DROP INDEX IF EXISTS resource_services_service_idx;
 DROP TABLE IF EXISTS resource_services;
+DROP TABLE IF EXISTS services;

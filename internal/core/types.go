@@ -1,6 +1,9 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 type Role string
 type RoleID int
@@ -9,7 +12,7 @@ const (
 	RoleSuperAdmin Role = "Super Admin"
 	RoleAdmin      Role = "Admin"
 	RoleCustomer   Role = "Customer"
-	RoleGuest      Role = "Guest"
+	// RoleGuest      Role = "Guest"
 )
 
 const (
@@ -24,7 +27,7 @@ var RoleToID = map[Role]RoleID{
 	RoleSuperAdmin: RoleSuperAdminID,
 	RoleAdmin:      RoleAdminID,
 	RoleCustomer:   RoleCustomerID,
-	RoleGuest:      RoleGuestID,
+	// RoleGuest:      RoleGuestID,
 }
 
 // Tied to RoleToID so these conversions never drift
@@ -67,4 +70,17 @@ func ParseRole(s string) (Role, error) {
 		return "", fmt.Errorf("String Not A Valid Role Name: %q", s)
 	}
 	return r, nil
+}
+
+// godoc
+// Restricts the generic functions below to types whose underlying type
+// is a string
+type StringEnum interface {
+	~string
+}
+
+// godoc
+// Generic Validation method for enum types
+func IsValidEnum[T StringEnum](value T, validOptions []T) bool {
+	return slices.Contains(validOptions, value)
 }

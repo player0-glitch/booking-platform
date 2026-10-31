@@ -12,7 +12,7 @@ import (
 type Middleware func(http.Handler) http.Handler
 type MiddlewareInterface interface {
 	AuthMiddlware(next http.Handler) http.Handler
-	Ensure(next http.Handler) http.Handler
+	EnsureAnonymous(next http.Handler) http.Handler
 }
 type Module struct {
 	userService    UserServiceInterface
@@ -23,7 +23,7 @@ type Module struct {
 
 // Implement the applications's Module interface
 func (m *Module) Name() string {
-	return "user module"
+	return "User Module"
 }
 
 // Any externel dependencies (like from the core app) needed by
@@ -54,18 +54,18 @@ func NewModule(params ModuleParams) *Module {
 
 func (m *Module) RegisterRoutes(r chi.Router) {
 	r.Route("/users", func(browse chi.Router) {
-		browse.Use(*m.anonMiddleware)
+		browse.Use(*m.anonMiddleware) //Perhaps this should be public (no middlware)
 		browse.Get("/all", m.userHandler.GetAll)
 		browse.Post("/", m.userHandler.Create)
 
 		browse.Group(func(protected chi.Router) {
 			protected.Use(*m.authMiddleware)
 
-			//Define the roles required by these routes
+			//Define the roles required by these routes <MOVE THIS TO THE AppMiddleware
 			protected.Use(authorisation.RequiredRoles(
 				core.RoleAdmin,
 				core.RoleCustomer, /*provision guest*/
-				core.RoleGuest))
+			))
 			protected.Get("/{id}", m.userHandler.GetById)
 		})
 
@@ -73,7 +73,6 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 			protected.Use(*m.authMiddleware)
 
 			protected.Use(authorisation.RequiredRoles(core.RoleSuperAdmin, core.RoleAdmin))
-			// r.Post("/", m.userHandler.Create)
 			protected.Delete("/{id}", m.userHandler.DeleteById)
 			protected.Delete("/{id}/soft", m.userHandler.SoftDeleteById)
 		})

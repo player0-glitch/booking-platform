@@ -84,7 +84,7 @@ func (s *SessionManager) Save(
 			}
 			//Delete the expired session
 			if err := s.db.WithContext(r.Context()).
-				Delete(&appSession{}, "id = ?", id).
+				Delete(&AppSession{}, "id = ?", id).
 				Error; err != nil {
 				return err
 			}
@@ -121,7 +121,7 @@ func (s *SessionManager) Save(
 	now := time.Now().UTC()
 	expiresAt := now.Add(time.Duration(session.Options.MaxAge) * time.Second)
 
-	record := appSession{
+	record := AppSession{
 		Base: core.Base{ID: sessionId,
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now()},
@@ -132,7 +132,7 @@ func (s *SessionManager) Save(
 	// New login/session-association logic may set this field explicitly.
 	var txErr = s.transactor.Transaction(r.Context(),
 		func(txCtx context.Context) error {
-			var existingRecord appSession
+			var existingRecord AppSession
 			dbTrx := database.DbFromTransaction(r.Context(), s.db)
 			findErr := dbTrx.Clauses(clause.Locking{Strength: "UPDATE"}).
 				Where("id = ?", sessionId).
@@ -197,7 +197,7 @@ func (s *SessionManager) load(r *http.Request, name string) (*sessions.Session, 
 	if err != nil {
 		return session, nil
 	}
-	var record appSession
+	var record AppSession
 	err = s.db.WithContext(r.Context()).
 		Where("id = ? AND expires_at > CURRENT_TIMESTAMP", &sessionId).
 		Take(&record).Error

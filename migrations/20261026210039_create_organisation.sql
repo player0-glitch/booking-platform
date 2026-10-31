@@ -9,11 +9,11 @@ CREATE TABLE IF NOT EXISTS organisations (
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     name TEXT NOT NULL,
     slug TEXT NOT NULL UNIQUE, -- preferably URL friendly
-    timezone TEXT NOT NULL DEFAULT "UTC",
-    status TEXT NOT NULL DEFAULT 'ACTIVE'
-        CHECK (status IN "active",'inactive'),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    timezone TEXT NOT NULL DEFAULT 'UTC',
+    status TEXT NOT NULL DEFAULT 'active'
+        CHECK (status IN ('active','inactive')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP 
 );
 -- +goose Down
 DROP TABLE IF EXISTS organisations;

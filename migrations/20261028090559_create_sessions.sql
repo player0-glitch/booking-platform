@@ -5,11 +5,11 @@ CREATE TABLE IF NOT EXISTS app_sessions(
     data JSONB NOT NULL DEFAULT '{}'::jsonb,
     expires_at TIMESTAMPTZ NOT NULL,
     claimed_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_sessions_expires_at ON app_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON app_sessions(expires_at);
 -- +goose Down
 DROP INDEX IF EXISTS idx_sessions_expires_at;
 DROP TABLE IF EXISTS app_sessions; 

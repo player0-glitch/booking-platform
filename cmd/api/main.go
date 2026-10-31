@@ -5,13 +5,13 @@ import (
 	"booking-platform/internal/auth"
 	"booking-platform/internal/core/adapters"
 	"booking-platform/internal/database"
+	"booking-platform/internal/database/seeder"
 	"booking-platform/internal/modules/user"
 	"booking-platform/internal/server"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -62,17 +62,16 @@ func main() {
 			Logger.Printf("Failed To Close Database Connection: %v", err)
 		}
 	}()
-	jwtSecret := os.Getenv("JWT_SECRET")
 	//Initialise the modularized application in reverse order, what's on top must
 	// be dependent on by what's at the bottom
 	fmt.Println("Registering Modules")
 	authModule := auth.NewModule(auth.ModuleParams{
-		JwtSecret:           jwtSecret,
-		UserReaderInterface: fulfillAuthUserContract(jwtSecret, databaseContext),
+		UserReaderInterface: fulfillAuthUserContract(databaseContext),
 	})
 	userModule := user.NewModule(user.ModuleParams{
-		DB:             databaseContext.DB(),
-		AuthMiddleware: authModule.AppMiddleware.AuthMiddlware,
+		DB:                  databaseContext.DB(),
+		AuthMiddleware:      authModule.AppMiddleware.AuthMiddlware,
+		AnonymousMiddleware: authModule.AppMiddleware.EnsureAnonymous,
 	})
 	//Run any seeder before the app starts
 	runSeeders(context.Background(), databaseContext)
@@ -119,13 +118,13 @@ func main() {
 // Fullfil the contract that the Auth & User module agree on.
 // Auth module wants a UserReaderInterface with GetByEmailWithRoles and defines the contract
 // UserRepository implements the interface/contract
-func fulfillAuthUserContract(jwtSecret string, db database.Service) *adapters.UserAdapter {
+func fulfillAuthUserContract(db database.Service) *adapters.UserAdapter {
 	userRepo := user.NewUserRepo(db.DB())
 	return adapters.NewUserAdapter(userRepo)
 }
 
 func runSeeders(ctx context.Context, db database.Service) {
 	userRepo := user.NewUserRepo(db.DB())
-	seeder := database.NewSeeder(userRepo)
+	seeder := seeder.NewSeeder(userRepo)
 	seeder.Seed(ctx)
 }

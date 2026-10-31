@@ -1,4 +1,4 @@
-package database
+package seeder
 
 import (
 	user "booking-platform/internal/modules/user"
