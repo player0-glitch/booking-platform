@@ -4,6 +4,8 @@ import (
 	"booking-platform/internal/core"
 	"context"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 type contextKey string
@@ -11,7 +13,8 @@ type contextKey string
 const UserContextKey contextKey = "user_claims"
 
 type Principal struct {
-	UserID string
+	// UserID string
+	UserID uuid.UUID
 	Role   core.Role
 }
 

@@ -18,10 +18,9 @@ var (
 )
 
 type seedUser struct {
-	FirstName string
-	LastName  string
-	Email     string
-	// RoleID      int
+	FirstName   string
+	LastName    string
+	Email       string
 	PasswordEnv string
 }
 
@@ -59,7 +58,7 @@ func seedUsers(ctx context.Context, userRepo UserSeederInterface) error {
 		hashes[s.PasswordEnv] = string(b)
 	}
 
-	userToInsert := make([]user.User, len(userSeeds))
+	usersToInsert := make([]user.User, len(userSeeds))
 	for i, s := range userSeeds {
 		hash := hashes[s.PasswordEnv]
 		u := user.User{
@@ -67,13 +66,12 @@ func seedUsers(ctx context.Context, userRepo UserSeederInterface) error {
 			LastName:     &s.LastName,
 			Email:        &s.Email,
 			PasswordHash: &hash,
-			// Role:         user.Role{Id: s.RoleID},
 		}
+		usersToInsert[i] = u
 		//n+1
-		userToInsert[i] = u
 		// userRepo.SeedUserIfNotExist(ctx, &u, u.RoleId)
 	}
-	if err := userRepo.BatchSeedUser(ctx, userToInsert); err != nil {
+	if err := userRepo.BatchSeedUser(ctx, usersToInsert); err != nil {
 		return fmt.Errorf("Failed To Seed Users: %v", err.Error())
 	}
 	return nil

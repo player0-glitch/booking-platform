@@ -25,6 +25,7 @@ type Module struct {
 type ModuleParams struct {
 	DB                  *gorm.DB
 	UserReaderInterface UserReaderInterface //contract it expects to read from user
+	Permissions         permissionsInterface
 	Transactor          database.TransactorInterface
 }
 
@@ -58,7 +59,7 @@ func NewModule(params ModuleParams) *Module {
 	//Create jwt service
 
 	//Lastly Create the AppMiddleware
-	appMW := NewAppMiddleware(store, "app_session", jwtSvc)
+	appMW := NewAppMiddleware(store, "app_session", jwtSvc, params.Permissions)
 	return &Module{
 		service:       svc,
 		store:         store,

@@ -11,40 +11,40 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-type jwtTokenValidator interface {
-	ValidateToken(tokenString string) (*claims, error)
-	CreateNewToken(userId uuid.UUID) (string, error)
-}
+const SessionTypeKey = "session_type"
 
 type authenticatedUser struct {
 	id   uuid.UUID
-	role core.Role //defined as a type in auth service file
+	role core.Role
 }
-
 type claims struct {
 	UserId uuid.UUID   `json:"user_id"`
 	Role   core.Role   `json:"role"`
 	RoleID core.RoleID `json:"role_id"`
 	jwt.RegisteredClaims
 }
+type permissionsInterface interface {
+	HasPermissions(context.Context, uuid.UUID, string, *uuid.UUID) (bool, error)
+}
+type jwtTokenValidator interface {
+	ValidateToken(tokenString string) (*claims, error)
+	CreateNewToken(userId uuid.UUID) (string, error)
+}
 type AppMiddleware struct {
-	// claims   claims
-	// authUser authenticatedUser
-	//from anon
 	name  string
 	sess  sessions.Store
 	store *storeManager
-
-	jwt jwtTokenValidator
+	jwt   jwtTokenValidator
+	perm  permissionsInterface
 }
 
-func NewAppMiddleware(store *storeManager, name string, jwtInterface jwtTokenValidator) *AppMiddleware {
-
+func NewAppMiddleware(store *storeManager, name string, jwtInterface jwtTokenValidator, permissions permissionsInterface) *AppMiddleware {
 	return &AppMiddleware{
 		sess:  store.session,
 		store: store,
 		name:  name,
 		jwt:   jwtInterface,
+		perm:  permissions,
 	}
 }
 
@@ -71,10 +71,9 @@ func (am *AppMiddleware) AuthMiddlware(next http.Handler) http.Handler {
 		// }
 
 		principal := authorisation.Principal{
-			UserID: claims.UserId.String(),
+			UserID: claims.UserId,
 			Role:   claims.Role,
 		}
-		// ctx := context.WithValue(r.Context(), authorisation.UserContextKey, authUser)
 		ctx := authorisation.WithPrincipal(r.Context(), principal)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -107,7 +106,51 @@ func (am *AppMiddleware) EnsureAnonymous(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-func (am *AppMiddleware) AnonymousTokenFromContext(ctx context.Context) (string, bool) {
+
+// Expects the organisation scope to be provided by trusted route context or
+// resolved from the requested resource.
+// Do not blindly trust an organization ID from a query parameter.
+// Resolve the organization from the target resource or validate the
+// caller's access to it before using it as the authorization scope.
+// For example, a booking-management endpoint should load the booking,
+// determine its organization, and then check bookings.manage against that
+// organization.
+func (am *AppMiddleware) RequirePermission(
+	permissionKey string,
+	organisationFromRequest func(*http.Request) (*uuid.UUID, error),
+) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			principal, ok := authorisation.PrincipalFromContext(r.Context())
+			if !ok {
+				http.Error(w, "Unauthorised", http.StatusUnauthorized)
+				return
+			}
+			var orgId *uuid.UUID
+			var err error
+			if organisationFromRequest != nil {
+				orgId, err = organisationFromRequest(r)
+				if err != nil {
+					http.Error(w, "Invalid Organisation Scope", http.StatusBadRequest)
+					return
+				}
+			}
+			isAllowed, err := am.perm.HasPermissions(
+				r.Context(), principal.UserID, permissionKey, orgId)
+			if err != nil {
+				http.Error(w, "authorisation unavailable", http.StatusInternalServerError)
+				return
+			}
+			if !isAllowed {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func AnonymousTokenFromContext(ctx context.Context) (string, bool) {
 	token, ok := ctx.Value(anonymousKey).(string)
 	return token, ok && token != ""
 }

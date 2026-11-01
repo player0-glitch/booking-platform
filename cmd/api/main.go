@@ -4,8 +4,10 @@ import (
 	"booking-platform/internal/app"
 	"booking-platform/internal/auth"
 	"booking-platform/internal/core/adapters"
+	"booking-platform/internal/core/authorisation"
 	"booking-platform/internal/database"
 	"booking-platform/internal/database/seeder"
+	"booking-platform/internal/modules/booking"
 	"booking-platform/internal/modules/user"
 	"booking-platform/internal/server"
 	"context"
@@ -64,15 +66,36 @@ func main() {
 	}()
 	//Initialise the modularized application in reverse order, what's on top must
 	// be dependent on by what's at the bottom
+	// Building Up The Core Components
+	fmt.Printf("Building Up The Core Components")
+	authorisationRepo := authorisation.NewRepository(databaseContext.DB())
+	_ = authorisation.NewService(
+		authorisationRepo,
+		database.NewGormTransactor(databaseContext.DB()))
+
 	fmt.Println("Registering Modules")
+
 	authModule := auth.NewModule(auth.ModuleParams{
 		UserReaderInterface: fulfillAuthUserContract(databaseContext),
+		Permissions:         authorisationRepo,
 	})
+	fmt.Printf("Registered %s Module \n", authModule.Name())
+
 	userModule := user.NewModule(user.ModuleParams{
 		DB:                  databaseContext.DB(),
 		AuthMiddleware:      authModule.AppMiddleware.AuthMiddlware,
 		AnonymousMiddleware: authModule.AppMiddleware.EnsureAnonymous,
 	})
+	fmt.Printf("Registered %s Module \n", userModule.Name())
+
+	bookingModule := booking.NewModule(booking.ModuleParams{
+		DB:                  databaseContext.DB(),
+		Transactor:          database.NewGormTransactor(databaseContext.DB()),
+		AuthMiddleware:      authModule.AppMiddleware.AuthMiddlware,
+		AnonymousMiddleware: authModule.AppMiddleware.EnsureAnonymous,
+	})
+	fmt.Printf("Registered %s Module \n", bookingModule.Name())
+
 	//Run any seeder before the app starts
 	runSeeders(context.Background(), databaseContext)
 
@@ -126,5 +149,9 @@ func fulfillAuthUserContract(db database.Service) *adapters.UserAdapter {
 func runSeeders(ctx context.Context, db database.Service) {
 	userRepo := user.NewUserRepo(db.DB())
 	seeder := seeder.NewSeeder(userRepo)
+	fmt.Print("Running Seeder")
 	seeder.Seed(ctx)
+}
+func buildCore(db database.Service) {
+
 }

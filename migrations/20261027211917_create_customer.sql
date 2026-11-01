@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS customers (
 );
 --One customer per email per business, case-insensitive. 
 CREATE UNIQUE INDEX customers_org_email_uniq ON
-    customers (organisation_id,lower(email)) WHERE email IS NOT NULL;
+    customers (organisation_id,LOWER(email)) WHERE email IS NOT NULL;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_user_id ON 
     customers (user_id)
