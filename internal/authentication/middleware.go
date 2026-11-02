@@ -1,4 +1,4 @@
-package auth
+package authentication
 
 import (
 	"booking-platform/internal/core"
@@ -6,31 +6,31 @@ import (
 	"context"
 	"net/http"
 
-	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
+	"gorm.io/gorm"
 )
 
-const SessionTypeKey = "session_type"
+const (
+	sessionTypeKey = "app_session"
+	jwtTypeKey     = "jwt_token"
+)
 
 type authenticatedUser struct {
 	id   uuid.UUID
 	role core.Role
 }
-type claims struct {
-	UserId uuid.UUID   `json:"user_id"`
-	Role   core.Role   `json:"role"`
-	RoleID core.RoleID `json:"role_id"`
-	jwt.RegisteredClaims
-}
 type permissionsInterface interface {
 	HasPermissions(context.Context, uuid.UUID, string, *uuid.UUID) (bool, error)
 }
+
 type jwtTokenValidator interface {
 	ValidateToken(tokenString string) (*claims, error)
 	CreateNewToken(userId uuid.UUID) (string, error)
 }
+
 type AppMiddleware struct {
+	db    *gorm.DB
 	name  string
 	sess  sessions.Store
 	store *storeManager
@@ -52,12 +52,12 @@ func NewAppMiddleware(store *storeManager, name string, jwtInterface jwtTokenVal
 // Authentication Layer using jwt Tokens from claims
 func (am *AppMiddleware) AuthMiddlware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//this token comes from the session
 		tokenStr, err := am.store.GetToken(r)
-		// 	if err != nil {
-		// 		http.Error(w, "Cannot Create A Provisioned Guest", http.StatusInternalServerError)
-		// 		return
-		// 	}
-		// }
+		if err != nil {
+			http.Error(w, "Cannot Create A Provisioned Guest", http.StatusInternalServerError)
+			return
+		}
 
 		claims, err := am.jwt.ValidateToken(tokenStr)
 		if err != nil {
@@ -69,11 +69,29 @@ func (am *AppMiddleware) AuthMiddlware(next http.Handler) http.Handler {
 		// 	id:   claims.UserId,
 		// 	role: claims.Role,
 		// }
+		//find the one record from the claims
+		var user struct {
+			ID            uuid.UUID
+			AccountStatus string
+		}
+		if err := am.db.WithContext(r.Context()).Table("users").
+			Select("id, account_status").
+			Where("id = ? AND deleted_at IS NULL ", claims.ID).
+			Take(&user).Error; err != nil {
+			http.Error(w, "Unauthorised Login Account", http.StatusUnauthorized)
+			return
+		}
+
+		if user.AccountStatus != "registered" {
+			http.Error(w, "Unauthorised Login To Unregistered Account", http.StatusUnauthorized)
+			return
+		}
 
 		principal := authorisation.Principal{
 			UserID: claims.UserId,
 			Role:   claims.Role,
 		}
+
 		ctx := authorisation.WithPrincipal(r.Context(), principal)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

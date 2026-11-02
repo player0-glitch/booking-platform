@@ -1,400 +1,364 @@
 {
-    "swagger": "2.0",
-    "info": {
-        "description": "This is a backend service for a booking platform(not like Booking.com)",
-        "title": "Booking Platform Service",
-        "contact": {},
-        "version": "0.1"
-    },
-    "host": "localhost:8080",
-    "basePath": "/",
-    "paths": {
-        "/auth/login": {
-            "post": {
-                "description": "Logs in a user, adds them to a 2hr session and return jwt",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Login and return jwt",
-                "parameters": [
-                    {
-                        "description": "Credentials Used For Logging In",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.loginRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Returns token object",
-                        "schema": {
-                            "$ref": "#/definitions/auth.tokenResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    },
-                    "401": {
-                        "description": "Unauthorised"
-                    }
-                }
+  "swagger": "2.0",
+  "info": {
+    "description": "This is a backend service for a booking platform(not like Booking.com)",
+    "title": "Booking Platform Service",
+    "contact": {},
+    "version": "0.1"
+  },
+  "host": "localhost:8080",
+  "basePath": "/",
+  "paths": {
+    "/authentication/login": {
+      "post": {
+        "description": "Logs in a user, adds them to a 2hr session and return jwt",
+        "produces": ["application/json"],
+        "tags": ["authentication"],
+        "summary": "Login and return jwt",
+        "parameters": [
+          {
+            "description": "Credentials Used For Logging In",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authentication.loginRequest"
             }
-        },
-        "/auth/logout": {
-            "post": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Logout and invalidate session and token",
-                "responses": {
-                    "200": {
-                        "description": "Successfully Logged out"
-                    },
-                    "401": {
-                        "description": "Unauthenticated"
-                    },
-                    "500": {
-                        "description": "Internal Server Error"
-                    }
-                }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns token object",
+            "schema": {
+              "$ref": "#/definitions/authentication.tokenResponse"
             }
-        },
-        "/auth/password": {
-            "post": {
-                "description": "Reset password for any role but 'Guest'",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Reset Recognised User Password",
-                "parameters": [
-                    {
-                        "description": "Reset Credentials",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.passwordResetRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Successfully Updated User Password"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                }
-            }
-        },
-        "/auth/password/reset": {
-            "post": {
-                "description": "Request for any role but 'Guest' to request password reset token",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "auth"
-                ],
-                "summary": "Request password reset token",
-                "parameters": [
-                    {
-                        "description": "Password reset credentials",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/auth.emailRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Returns Raw Reset Token",
-                        "schema": {
-                            "$ref": "#/definitions/auth.tokenResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                }
-            }
-        },
-        "/users": {
-            "post": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Create A New User",
-                "parameters": [
-                    {
-                        "description": "User Object type",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/user.createUserRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                }
-            }
-        },
-        "/users/all": {
-            "get": {
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Retrieve All Users",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    }
-                }
-            }
-        },
-        "/users/{id}": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Retrieve user by id",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "User Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "202": {
-                        "description": "Accepted",
-                        "schema": {
-                            "$ref": "#/definitions/user.userRequest"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Not Found"
-                    }
-                }
-            },
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Delete user by id",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "User Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Not Found"
-                    }
-                }
-            }
-        },
-        "/users/{id}/soft": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Solf delete user by id",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User Id",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/user.userRequest"
-                        }
-                    },
-                    "204": {
-                        "description": "No Content"
-                    },
-                    "403": {
-                        "description": "Forbidden"
-                    },
-                    "404": {
-                        "description": "Not Found"
-                    }
-                }
-            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "401": {
+            "description": "Unauthorised"
+          }
         }
+      }
     },
-    "definitions": {
-        "auth.emailRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.loginRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.passwordResetRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                },
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "auth.tokenResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.createUserRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.rolesRequest": {
-            "type": "object",
-            "properties": {
-                "role_name": {
-                    "type": "string"
-                }
-            }
-        },
-        "user.userRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "first_name": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string",
-                    "format": "uuid"
-                },
-                "last_name": {
-                    "type": "string"
-                },
-                "roles": {
-                    "$ref": "#/definitions/user.rolesRequest"
-                }
-            }
+    "/authentication/logout": {
+      "post": {
+        "produces": ["application/json"],
+        "tags": ["authentication"],
+        "summary": "Logout and invalidate session and token",
+        "responses": {
+          "200": {
+            "description": "Successfully Logged out"
+          },
+          "401": {
+            "description": "Unauthenticated"
+          },
+          "500": {
+            "description": "Internal Server Error"
+          }
         }
+      }
     },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "description": "Enter your JWT as: Bearer \u003ctoken\u003e",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
+    "/authentication/password": {
+      "post": {
+        "description": "Reset password for any role but 'Guest'",
+        "produces": ["application/json"],
+        "tags": ["authentication"],
+        "summary": "Reset Recognised User Password",
+        "parameters": [
+          {
+            "description": "Reset Credentials",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authentication.passwordResetRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully Updated User Password"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
         }
+      }
+    },
+    "/authentication/password/reset": {
+      "post": {
+        "description": "Request for any role but 'Guest' to request password reset token",
+        "produces": ["application/json"],
+        "tags": ["authentication"],
+        "summary": "Request password reset token",
+        "parameters": [
+          {
+            "description": "Password reset credentials",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/authentication.emailRequest"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Returns Raw Reset Token",
+            "schema": {
+              "$ref": "#/definitions/authentication.tokenResponse"
+            }
+          },
+          "400": {
+            "description": "Bad Request"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/users": {
+      "post": {
+        "produces": ["application/json"],
+        "tags": ["users"],
+        "summary": "Create A New User",
+        "parameters": [
+          {
+            "description": "User Object type",
+            "name": "request",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/user.createUserRequest"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/users/all": {
+      "get": {
+        "produces": ["application/json"],
+        "tags": ["users"],
+        "summary": "Retrieve All Users",
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
+    "/users/{id}": {
+      "get": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": ["application/json"],
+        "tags": ["users"],
+        "summary": "Retrieve user by id",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "description": "User Id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "schema": {
+              "$ref": "#/definitions/user.userRequest"
+            }
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": ["application/json"],
+        "tags": ["users"],
+        "summary": "Delete user by id",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "uuid",
+            "description": "User Id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/users/{id}/soft": {
+      "delete": {
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "produces": ["application/json"],
+        "tags": ["users"],
+        "summary": "Solf delete user by id",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "User Id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "$ref": "#/definitions/user.userRequest"
+            }
+          },
+          "204": {
+            "description": "No Content"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
     }
+  },
+  "definitions": {
+    "authentication.emailRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        }
+      }
+    },
+    "authentication.loginRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "authentication.passwordResetRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "authentication.tokenResponse": {
+      "type": "object",
+      "properties": {
+        "token": {
+          "type": "string"
+        }
+      }
+    },
+    "user.createUserRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        }
+      }
+    },
+    "user.rolesRequest": {
+      "type": "object",
+      "properties": {
+        "role_name": {
+          "type": "string"
+        }
+      }
+    },
+    "user.userRequest": {
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "roles": {
+          "$ref": "#/definitions/user.rolesRequest"
+        }
+      }
+    }
+  },
+  "securityDefinitions": {
+    "BearerAuth": {
+      "description": "Enter your JWT as: Bearer \u003ctoken\u003e",
+      "type": "apiKey",
+      "name": "Authorization",
+      "in": "header"
+    }
+  }
 }

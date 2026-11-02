@@ -1,7 +1,7 @@
 package adapters
 
 import (
-	"booking-platform/internal/auth"
+	"booking-platform/internal/authentication"
 	"booking-platform/internal/modules/user"
 	"context"
 )
@@ -16,15 +16,17 @@ func NewUserAdapter(userRepo *user.UserRepository) *UserAdapter {
 	}
 }
 
-func (a *UserAdapter) GetByEmail(ctx context.Context, email string) (*auth.AuthUser, error) {
+func (a *UserAdapter) GetByEmail(ctx context.Context, email string) (*authentication.AuthUser, error) {
 	userModel, err := a.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
-	authUser := &auth.AuthUser{
-		Id:    (userModel.Base.ID),
-		Email: *userModel.Email,
+	authUser := &authentication.AuthUser{
+		Id:            (userModel.Base.ID),
+		Email:         *userModel.Email,
+		PasswordHash:  userModel.PasswordHash,
+		AccountStatus: string(userModel.AccountStatus),
 	}
 
 	return authUser, nil
@@ -32,4 +34,4 @@ func (a *UserAdapter) GetByEmail(ctx context.Context, email string) (*auth.AuthU
 
 // If the contract between the Auth and User module this will throw
 // a build error
-var _ auth.UserReaderInterface = (*UserAdapter)(nil)
+var _ authentication.UserReaderInterface = (*UserAdapter)(nil)

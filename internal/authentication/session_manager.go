@@ -1,5 +1,6 @@
-package auth
+package authentication
 
+//prepare to remove from this package
 import (
 	"booking-platform/internal/core"
 	"booking-platform/internal/database"

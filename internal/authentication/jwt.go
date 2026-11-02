@@ -1,11 +1,19 @@
-package auth
+package authentication
 
 import (
+	"booking-platform/internal/core"
 	"time"
 
 	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
+
+type claims struct {
+	UserId uuid.UUID   `json:"user_id"`
+	Role   core.Role   `json:"role"`
+	RoleID core.RoleID `json:"role_id"`
+	jwt.RegisteredClaims
+}
 
 type jwtService struct {
 	jwtSecret []byte

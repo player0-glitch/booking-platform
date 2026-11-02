@@ -16,15 +16,15 @@ CREATE INDEX IF NOT EXISTS idx_roles_deleted_at ON roles(deleted_at);
 -- ============================================
 -- Seed to be able to work with something 
 -- ============================================
-INSERT INTO roles (role_key,role_name,description,is_system) VALUES
-('Super-Admin','super admin','Platform-wide',TRUE),
-('Admin','admin','Admin accesc scoped',TRUE),
-('Staff','staff','Staff that belongs to an organisation',TRUE),
+-- INSERT INTO roles (role_key,role_name,description,is_system) VALUES
+-- ('Super-Admin','super admin','Platform-wide',TRUE),
+-- ('Admin','admin','Admin access scoped',TRUE),
+-- ('Staff','staff','Staff that belongs to an organisation',TRUE),
 -- this is not a actually ro;le. I just need something to work with outside of the organisation
-('Sylist','tier 1 stylist','Belongs to 1 organisation',FALSE)
+--('Sylist','tier 1 stylist','Belongs to 1 organisation',FALSE)
 -- Guest: can browse and has a temporary session, so they can pick up where
 -- they left off before becoming a customer
-ON CONFLICT DO NOTHING;
+-- ON CONFLICT DO NOTHING;
 -- ============================================
 -- Permissions used to describe what each role can perform
 -- ============================================

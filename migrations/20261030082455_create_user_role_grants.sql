@@ -22,6 +22,6 @@ CREATE INDEX IF NOT EXISTS idx_user_role_grants_role_id
   ON user_role_grants(role_id);
 -- +goose Down
 DROP INDEX IF EXISTS idx_user_role_grants_role_id;
-DROP INDEX IF EXISTS idx_user_role_grants_user_id
-DROP TABLE IF NOT EXISTS user_role_grants;
+DROP INDEX IF EXISTS idx_user_role_grants_user_id;
+DROP TABLE IF EXISTS user_role_grants;
 

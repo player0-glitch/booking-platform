@@ -1,4 +1,4 @@
-package auth
+package authentication
 
 import (
 	"context"
@@ -9,9 +9,10 @@ import (
 // User struct with the attributes expected byt the Auth Domain
 // This is adapted to from the User model
 type AuthUser struct {
-	Id           uuid.UUID
-	Email        string
-	PasswordHash string
+	Id            uuid.UUID
+	Email         string
+	PasswordHash  *string
+	AccountStatus string
 }
 
 // Contract that the Auth Domain expect to read from the User Domain

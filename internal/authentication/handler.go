@@ -1,5 +1,5 @@
-// Handlers for auth endpoints
-package auth
+// Handlers for authentication endpoints
+package authentication
 
 import (
 	json "booking-platform/internal/core/json"
@@ -28,13 +28,13 @@ type loginResponse struct {
 // Login
 // @Summary		Login and return jwt
 // @Description	Logs in a user, adds them to a 2hr session and return jwt
-// @Tags		auth
+// @Tags		authentication
 // @Param 	request body loginRequest true "Credentials Used For Logging In"
 // @Produce		json
 // @Success		200 {object} tokenResponse "Returns token object"
 // @Failure		400  "Bad Request"
 // @Failure		401  "Unauthorised"
-// @Router		/auth/login [post]
+// @Router		/authentication/login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	var res tokenResponse
@@ -65,12 +65,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // godoc
 // Logout
 // @Summary		Logout and invalidate session and token
-// @Tags		auth
+// @Tags		authentication
 // @Produce		json
 // @Success		200 "Successfully Logged out"
 // @Failure 	401 "Unauthenticated"
 // @Failure		500
-// @Router 		/auth/logout [post]
+// @Router 		/authentication/logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if err := h.service.store.Clear(w, r); err != nil {
 		http.Error(w, "Failed To Clear Session", http.StatusInternalServerError)
@@ -91,13 +91,13 @@ type emailRequest struct {
 // Request Password Reset
 // @Summary Request password reset token
 // @Description		Request for any role but 'Guest' to request password reset token
-// @Tags		auth
+// @Tags		authentication
 // @Param	request body emailRequest true "Password reset credentials"
 // @Produce		json
 // @Success		200 {object} tokenResponse "Returns Raw Reset Token"
 // @Failure		400 "Bad Request"
 // @Failure 	403 "Forbidden"
-// @Router 		/auth/password/reset [post]
+// @Router 		/authentication/password/reset [post]
 func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	var req emailRequest
 	err := json.Reader(r, req)
@@ -126,12 +126,12 @@ type passwordResetRequest struct {
 // godoc
 // @Description	Reset password for any role but 'Guest'
 // @Summary 	Reset Recognised User Password
-// @Tags		auth
+// @Tags		authentication
 // @Param	request body passwordResetRequest true "Reset Credentials"
 // @Produce		json
 // @Success		200 "Successfully Updated User Password"
 // @Failure		403 "Forbidden"
-// @Router 		/auth/password [post]
+// @Router 		/authentication/password [post]
 func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req passwordResetRequest
 

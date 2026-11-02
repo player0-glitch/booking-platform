@@ -2,7 +2,7 @@ package main
 
 import (
 	"booking-platform/internal/app"
-	"booking-platform/internal/auth"
+	"booking-platform/internal/authentication"
 	"booking-platform/internal/core/adapters"
 	"booking-platform/internal/core/authorisation"
 	"booking-platform/internal/database"
@@ -75,7 +75,7 @@ func main() {
 
 	fmt.Println("Registering Modules")
 
-	authModule := auth.NewModule(auth.ModuleParams{
+	authModule := authentication.NewModule(authentication.ModuleParams{
 		UserReaderInterface: fulfillAuthUserContract(databaseContext),
 		Permissions:         authorisationRepo,
 	})
@@ -102,6 +102,8 @@ func main() {
 	app, errAppStart := app.NewApplication(
 		authModule,
 		userModule,
+		bookingModule,
+		// catalogueModule,
 	)
 	if errAppStart != nil {
 		log.Fatalf("%s", errAppStart.Error())
@@ -148,10 +150,10 @@ func fulfillAuthUserContract(db database.Service) *adapters.UserAdapter {
 
 func runSeeders(ctx context.Context, db database.Service) {
 	userRepo := user.NewUserRepo(db.DB())
-	seeder := seeder.NewSeeder(userRepo)
+	seeder := seeder.NewSeeder(db.DB(), seeder.SeederParams{
+		UserRepo:    userRepo,
+		Transaction: database.NewGormTransactor(db.DB()),
+	})
 	fmt.Print("Running Seeder")
 	seeder.Seed(ctx)
-}
-func buildCore(db database.Service) {
-
 }

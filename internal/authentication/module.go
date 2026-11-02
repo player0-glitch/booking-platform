@@ -1,4 +1,4 @@
-package auth
+package authentication
 
 import (
 	"booking-platform/internal/core"
@@ -69,9 +69,9 @@ func NewModule(params ModuleParams) *Module {
 }
 
 func (m *Module) RegisterRoutes(r chi.Router) {
-	r.Route("/auth", func(r chi.Router) {
+	r.Route("/authentication", func(r chi.Router) {
 		//These endpoints should  be standalone
-		//They both are concerned about auth but carry totaly different responsibilities
+		//They both are concerned about authentication but carry totaly different responsibilities
 		r.Post("/login", m.handler.Login)
 		r.Post("/logout", m.handler.Logout)
 

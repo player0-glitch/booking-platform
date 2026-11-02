@@ -15,14 +15,14 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/login": {
+        "/authentication/login": {
             "post": {
                 "description": "Logs in a user, adds them to a 2hr session and return jwt",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "authentication"
                 ],
                 "summary": "Login and return jwt",
                 "parameters": [
@@ -32,7 +32,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.loginRequest"
+                            "$ref": "#/definitions/authentication.loginRequest"
                         }
                     }
                 ],
@@ -40,7 +40,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns token object",
                         "schema": {
-                            "$ref": "#/definitions/auth.tokenResponse"
+                            "$ref": "#/definitions/authentication.tokenResponse"
                         }
                     },
                     "400": {
@@ -52,13 +52,13 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/logout": {
+        "/authentication/logout": {
             "post": {
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "authentication"
                 ],
                 "summary": "Logout and invalidate session and token",
                 "responses": {
@@ -74,14 +74,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/password": {
+        "/authentication/password": {
             "post": {
                 "description": "Reset password for any role but 'Guest'",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "authentication"
                 ],
                 "summary": "Reset Recognised User Password",
                 "parameters": [
@@ -91,7 +91,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.passwordResetRequest"
+                            "$ref": "#/definitions/authentication.passwordResetRequest"
                         }
                     }
                 ],
@@ -105,14 +105,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/auth/password/reset": {
+        "/authentication/password/reset": {
             "post": {
                 "description": "Request for any role but 'Guest' to request password reset token",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "auth"
+                    "authentication"
                 ],
                 "summary": "Request password reset token",
                 "parameters": [
@@ -122,7 +122,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.emailRequest"
+                            "$ref": "#/definitions/authentication.emailRequest"
                         }
                     }
                 ],
@@ -130,7 +130,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Returns Raw Reset Token",
                         "schema": {
-                            "$ref": "#/definitions/auth.tokenResponse"
+                            "$ref": "#/definitions/authentication.tokenResponse"
                         }
                     },
                     "400": {
@@ -307,7 +307,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.emailRequest": {
+        "authentication.emailRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -315,7 +315,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.loginRequest": {
+        "authentication.loginRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -326,7 +326,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.passwordResetRequest": {
+        "authentication.passwordResetRequest": {
             "type": "object",
             "properties": {
                 "email": {
@@ -340,7 +340,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.tokenResponse": {
+        "authentication.tokenResponse": {
             "type": "object",
             "properties": {
                 "token": {

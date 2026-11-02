@@ -19,10 +19,13 @@ type ModuleParams struct {
 }
 
 type Module struct {
-	resourceRepo *ResourceRepository
-	serivceRepo  *ServicesRepository
-	resourceSvc  *ResourceService
-	servicesSvc  *ServicesService
+	resourceRepo   *ResourceRepository
+	serivceRepo    *ServicesRepository
+	resourceSvc    *ResourceService
+	servicesSvc    *ServicesService
+	handler        *Handler
+	authMiddleware Middleware
+	anonMiddleware Middleware
 }
 
 func (m *Module) Name() string {
@@ -33,7 +36,13 @@ func (m *Module) RegisterRoutes(r chi.Router) {
 	r.Route("/catalogue", func(browse chi.Router) {
 
 	})
-	r.Route("/organisation", func(protected chi.Router) {
+	r.Route("/admin", func(r chi.Router) {
+		r.Group(func(protected chi.Router) {
+			protected.Use(m.authMiddleware)
+			protected.Post("/organisations", m.handler.CreateOrg)
+		})
+		r.Group(func(public chi.Router) {
 
+		})
 	})
 }

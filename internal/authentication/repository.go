@@ -1,4 +1,4 @@
-package auth
+package authentication
 
 import (
 	"booking-platform/internal/database"
@@ -50,8 +50,8 @@ func (r *PasswordRepository) LookupToken(ctx context.Context, tokenHash string) 
 // Updates the user's password hash with the hash from reset password and removes user from password reset entry
 func (r *PasswordRepository) UpdatePasswordReset(ctx context.Context, passwordHash []byte, userId uuid.UUID) error {
 	//Will pass r.db to run in a transaction if called within such a context
-	// db := database.DbFromTransaction(ctx, r.db)
-	return r.db.Table("users").
+	db := database.DbFromTransaction(ctx, r.db)
+	return db.Table("users").
 		Where("id = ?", userId).Update("password_hash", passwordHash).Error
 }
 

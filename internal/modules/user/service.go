@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrUserNotFound = errors.New("User Not Found")
+	ErrUserNotFound           = errors.New("User Not Found")
+	ErrEmailAlreadyRegistered = errors.New("email already taken")
 )
 
 // Concrete implementation of IUserService private to the user package

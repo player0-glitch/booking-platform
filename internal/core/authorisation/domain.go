@@ -1,8 +1,9 @@
 package authorisation
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Role struct {
@@ -10,6 +11,7 @@ type Role struct {
 	RoleName    string
 	RoleKey     string `gorm:"size:50"`
 	Description string
+	IsSystem    bool
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   time.Time

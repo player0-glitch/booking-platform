@@ -1,82 +1,61 @@
 package seeder
 
 import (
+	"booking-platform/internal/database"
 	user "booking-platform/internal/modules/user"
 	"context"
+	"errors"
+
+	"gorm.io/gorm"
 )
 
-/*
-permissions
-INSERT INTO permissions (permission_key, description)
-VALUES
-    ('users.read', 'Read user records'),
-    ('users.manage', 'Create and manage user records'),
-    ('roles.read', 'Read role definitions'),
-    ('roles.manage', 'Create and update role definitions'),
-    ('roles.grant', 'Grant and revoke roles'),
-    ('organizations.read', 'Read organization data'),
-    ('organizations.manage', 'Manage organization data'),
-    ('bookings.create', 'Create bookings'),
-    ('bookings.read.own', 'Read own bookings'),
-    ('bookings.manage', 'Manage bookings within an authorized scope'),
-    ('services.read', 'Read bookable services'),
-    ('services.manage', 'Manage services and availability')
-ON CONFLICT (permission_key) DO NOTHING;
-
-// permissions to roles
--- 7. Seed initial role-permission mappings.
--- These are examples. Adjust them to your actual authorization policy.
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM roles r
-CROSS JOIN permissions p
-WHERE r.role_name = 'Super Admin'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM roles r
-JOIN permissions p
-  ON p.permission_key IN (
-      'organizations.read',
-      'organizations.manage',
-      'bookings.read.own',
-      'bookings.create',
-      'bookings.manage',
-      'services.read',
-      'services.manage'
-  )
-WHERE r.role_name = 'Admin'
-ON CONFLICT DO NOTHING;
-
-INSERT INTO role_permissions (role_id, permission_id)
-SELECT r.id, p.id
-FROM roles r
-JOIN permissions p
-  ON p.permission_key IN (
-      'bookings.create',
-      'bookings.read.own',
-      'services.read'
-  )
-WHERE r.role_name = 'Customer'
-ON CONFLICT DO NOTHING;
-
-*/
+var (
+	ErrFailedUserSeed            = errors.New("Failed To Seed Users")
+	ErrFailedRoleSeed            = errors.New("Failed To Seed Roles")
+	ErrFailedPermissionSeed      = errors.New("Failed To Seed Permissions")
+	ErrFailedRolePermissionsSeed = errors.New("Failed To Seed Role Permissions Table")
+)
 
 type UserSeederInterface interface {
-	SeedUserIfNotExist(context.Context, *user.User, int) error
 	BatchSeedUser(context.Context, []user.User) error
 }
 
+type SeederParams struct {
+	UserRepo    UserSeederInterface
+	Transaction database.TransactorInterface
+}
 type Seeder struct {
+	DB       *gorm.DB
 	userRepo UserSeederInterface
+	Trx      database.TransactorInterface
 }
 
-func NewSeeder(userRepo UserSeederInterface) *Seeder {
+func NewSeeder(db *gorm.DB, params SeederParams) *Seeder {
 	return &Seeder{
-		userRepo: userRepo,
+		DB:       db,
+		userRepo: params.UserRepo,
+		Trx:      params.Transaction,
 	}
 }
 func (s *Seeder) Seed(ctx context.Context) error {
-	return seedUsers(ctx, s.userRepo)
+	if err := s.seedUsers(ctx); err != nil {
+		return ErrFailedUserSeed
+	}
+	/*
+			Roles need to be seeded first, followed by Permissions
+			and lastly the joining table RolePermissions
+		   (1)
+	*/
+	if err := s.seedRoles(ctx); err != nil {
+		return ErrFailedRoleSeed
+	}
+	// (2)
+	if err := s.seedPermission(ctx); err != nil {
+		return ErrFailedPermissionSeed
+	}
+	// (3)
+	if err := s.seedRolePermissions(ctx); err != nil {
+		return ErrFailedRolePermissionsSeed
+	}
+	return nil
 }

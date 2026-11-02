@@ -1,4 +1,4 @@
-package auth
+package authentication
 
 import (
 	"booking-platform/internal/database"
@@ -70,6 +70,9 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 	if err != nil {
 		return "Invalid Email, No Database Match", err
 	}
+	if user.AccountStatus != "registered" || user.PasswordHash == nil {
+		return "", errInvalidCredentials
+	}
 
 	info := s.loginInfo.GetOrAdd(user.Email)
 	fmt.Printf("Login Info Dictionanry: %v\n", info)
@@ -86,7 +89,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (string
 	}
 	//failed to login
 	if email != user.Email ||
-		!checkPassword(password, user.PasswordHash) {
+		!checkPassword(password, *user.PasswordHash) {
 		info.attempts++
 
 		if info.attempts >= 3 {

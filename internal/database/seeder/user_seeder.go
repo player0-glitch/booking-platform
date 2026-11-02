@@ -25,13 +25,33 @@ type seedUser struct {
 }
 
 var userSeeds = []seedUser{
-	{"Super", "User", "super@example.com" /*role{RoleName: core.RoleSuperAdmin},*/, superAdminPassword},
-	{"Admin", "User", "admin@example.com" /*role{RoleName: core.RoleAdmin},*/, adminPassword},
-	{"Customer", "User", "customer@example.com" /* role{RoleName: core.RoleCustomer},*/, customerPassword},
-	{"Guest", "User", "guest@example.com" /*role{RoleName: core.RoleGuest},*/, guestPassword},
+	{
+		FirstName:   "Super",
+		LastName:    "User",
+		Email:       "super@example.com",
+		PasswordEnv: superAdminPassword,
+	},
+	{
+		FirstName:   "Admin",
+		LastName:    "User",
+		Email:       "admin@example.com",
+		PasswordEnv: adminPassword,
+	},
+	{
+		FirstName:   "Customer",
+		LastName:    "User",
+		Email:       "customer@example.com",
+		PasswordEnv: customerPassword,
+	},
+	{
+		FirstName:   "Hair 1",
+		LastName:    "Stylist 1",
+		Email:       "stylist@nonhle.com",
+		PasswordEnv: "hairStrongPass123",
+	},
 }
 
-func seedUsers(ctx context.Context, userRepo UserSeederInterface) error {
+func (s *Seeder) seedUsers(ctx context.Context) error {
 	passwords := make(map[string]string, len(userSeeds))
 	var missing []string
 	//Ensure existence
@@ -71,7 +91,7 @@ func seedUsers(ctx context.Context, userRepo UserSeederInterface) error {
 		//n+1
 		// userRepo.SeedUserIfNotExist(ctx, &u, u.RoleId)
 	}
-	if err := userRepo.BatchSeedUser(ctx, usersToInsert); err != nil {
+	if err := s.userRepo.BatchSeedUser(ctx, usersToInsert); err != nil {
 		return fmt.Errorf("Failed To Seed Users: %v", err.Error())
 	}
 	return nil
