@@ -54,7 +54,7 @@ definitions:
       last_name:
         type: string
       roles:
-        $ref: "#/definitions/user.rolesRequest"
+        $ref: '#/definitions/user.rolesRequest'
     type: object
 host: localhost:8080
 info:
@@ -67,30 +67,30 @@ paths:
     post:
       description: Logs in a user, adds them to a 2hr session and return jwt
       parameters:
-        - description: Credentials Used For Logging In
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/authentication.loginRequest"
+      - description: Credentials Used For Logging In
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authentication.loginRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Returns token object
           schema:
-            $ref: "#/definitions/authentication.tokenResponse"
+            $ref: '#/definitions/authentication.tokenResponse'
         "400":
           description: Bad Request
         "401":
           description: Unauthorised
       summary: Login and return jwt
       tags:
-        - authentication
+      - authentication
   /authentication/logout:
     post:
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Successfully Logged out
@@ -100,19 +100,19 @@ paths:
           description: Internal Server Error
       summary: Logout and invalidate session and token
       tags:
-        - authentication
+      - authentication
   /authentication/password:
     post:
       description: Reset password for any role but 'Guest'
       parameters:
-        - description: Reset Credentials
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/authentication.passwordResetRequest"
+      - description: Reset Credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authentication.passwordResetRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Successfully Updated User Password
@@ -120,42 +120,42 @@ paths:
           description: Forbidden
       summary: Reset Recognised User Password
       tags:
-        - authentication
+      - authentication
   /authentication/password/reset:
     post:
       description: Request for any role but 'Guest' to request password reset token
       parameters:
-        - description: Password reset credentials
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/authentication.emailRequest"
+      - description: Password reset credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/authentication.emailRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: Returns Raw Reset Token
           schema:
-            $ref: "#/definitions/authentication.tokenResponse"
+            $ref: '#/definitions/authentication.tokenResponse'
         "400":
           description: Bad Request
         "403":
           description: Forbidden
       summary: Request password reset token
       tags:
-        - authentication
+      - authentication
   /users:
     post:
       parameters:
-        - description: User Object type
-          in: body
-          name: request
-          required: true
-          schema:
-            $ref: "#/definitions/user.createUserRequest"
+      - description: User Object type
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/user.createUserRequest'
       produces:
-        - application/json
+      - application/json
       responses:
         "201":
           description: Created
@@ -163,67 +163,67 @@ paths:
           description: Forbidden
       summary: Create A New User
       tags:
-        - users
+      - users
   /users/{id}:
     delete:
       parameters:
-        - description: User Id
-          format: uuid
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: User Id
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "403":
           description: Forbidden
         "404":
           description: Not Found
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       summary: Delete user by id
       tags:
-        - users
+      - users
     get:
       parameters:
-        - description: User Id
-          format: uuid
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: User Id
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "202":
           description: Accepted
           schema:
-            $ref: "#/definitions/user.userRequest"
+            $ref: '#/definitions/user.userRequest'
         "403":
           description: Forbidden
         "404":
           description: Not Found
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       summary: Retrieve user by id
       tags:
-        - users
+      - users
   /users/{id}/soft:
     delete:
       parameters:
-        - description: User Id
-          in: path
-          name: id
-          required: true
-          type: string
+      - description: User Id
+        in: path
+        name: id
+        required: true
+        type: string
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: "#/definitions/user.userRequest"
+            $ref: '#/definitions/user.userRequest'
         "204":
           description: No Content
         "403":
@@ -231,14 +231,14 @@ paths:
         "404":
           description: Not Found
       security:
-        - BearerAuth: []
+      - BearerAuth: []
       summary: Solf delete user by id
       tags:
-        - users
+      - users
   /users/all:
     get:
       produces:
-        - application/json
+      - application/json
       responses:
         "200":
           description: OK
@@ -246,10 +246,10 @@ paths:
           description: Forbidden
       summary: Retrieve All Users
       tags:
-        - users
+      - users
 securityDefinitions:
   BearerAuth:
-    description: "Enter your JWT as: Bearer <token>"
+    description: 'Enter your JWT as: Bearer <token>'
     in: header
     name: Authorization
     type: apiKey

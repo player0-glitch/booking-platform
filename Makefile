@@ -1,5 +1,7 @@
 #Include environment variables
 -include .env
+export GOOSE_DRVIER GOOSE_DBSTRING GOOSE_MIGRATION_DIR
+
 .PHONY: all build setup dev api worker frontend worker redis test \
 fmt lint redis-install debug
 
@@ -71,7 +73,6 @@ redis:
 		redis-server; \
 	fi
 
-# Sqlite3 is used in the development environment. 
 redis-install:
 	@if command -v redis-server > /dev/null; then \
 		echo 'Redis Installed. Not needed for dev environment'; \
@@ -100,8 +101,9 @@ test:
 
 # All migration files live in one migrations/ directory at root level 
 # each module still has ownership of it's migrations as per the naming convention
-.PHONY: migrate-status migrate-up migrate-down 	migration migrate-force
-DB_URL = sqlite3://storage/go_db.sqlite
+.PHONY: migration-status migration-up migration-down migration-down-by-one migration-fix \
+migration-reset
+
 MIGRATIONS_DIR ?= ./migrations/
 
 migration-create:
@@ -112,14 +114,14 @@ migration-create:
 migration-status:
 	@goose status
 migration-up:
-	@goose up
+	goose up
 migration-down:
 	@if [-z "$(version)"]; then echo "Error: Provide a 'version'. Run goose status to find versions"; exit 1; fi
-	@goose down-to "$(version)"
+	goose down-to "$(version)"
 migration-down-by-one:
-	@goose down
+	goose down
 migration-fix:
-	@goose fix
+	goose fix
 migration-reset:
-	@goose reset
+	goose reset
 

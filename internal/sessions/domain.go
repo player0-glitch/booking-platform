@@ -1,19 +1,19 @@
 package sessions
 
 import (
-	"booking-platform/internal/core"
 	"time"
+
+	"booking-platform/internal/core"
 
 	"github.com/google/uuid"
 )
 
-// avoiding naming conflicts
 type AppSession struct {
-	core.Base
-	//I might end up having to map the sessions.ID to the tokenHash
+	base core.Base
+	// I might end up having to map the sessions.ID to the tokenHash
 	TokenHash       []byte
 	Data            []byte     `gorm:"type:jsonb;not null"`
-	ClaimedByUserId *uuid.UUID `gorm:"type:uuid"`
+	ClaimedByUserID *uuid.UUID `gorm:"type:uuid"`
 	ExpiresAt       time.Time
 }
 

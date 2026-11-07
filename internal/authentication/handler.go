@@ -2,17 +2,28 @@
 package authentication
 
 import (
-	json "booking-platform/internal/core/json"
 	"net/http"
+
+	json "booking-platform/internal/core/json"
+	"booking-platform/internal/sessions"
+
+	gorillaSessions "github.com/gorilla/sessions"
 )
 
-type AuthHandler struct {
-	service *AuthService
+type handlerSessionInterface interface {
+	Rotate(w http.ResponseWriter, r *http.Request) (*gorillaSessions.Session, error)
+	Clear(w http.ResponseWriter, r *http.Request) error
 }
 
-func NewAuthHandler(service *AuthService) *AuthHandler {
-	return &AuthHandler{
+type Handler struct {
+	service *Service
+	sess    handlerSessionInterface
+}
+
+func NewHandler(service *Service, sessions handlerSessionInterface) *Handler {
+	return &Handler{
 		service: service,
+		sess:    sessions,
 	}
 }
 
@@ -35,7 +46,7 @@ type loginResponse struct {
 // @Failure		400  "Bad Request"
 // @Failure		401  "Unauthorised"
 // @Router		/authentication/login [post]
-func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	var res tokenResponse
 	errJsonDecoder := json.Reader(r, &req)
@@ -46,20 +57,28 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, err := h.service.Login(r.Context(), req.Email, req.Password)
-
 	if err != nil {
 		http.Error(w, "Invalid Token On Login", http.StatusUnauthorized)
 		return
 	}
-	err = h.service.store.SaveToken(w, r, token)
+	// TODO: this should eventually be in a database transaction. This needs to be atomic
+	session, err := h.sess.Rotate(w, r)
+	if err != nil {
+		http.Error(w, "session failed to be created or rotated", http.StatusInternalServerError)
+		return
+	}
+	session.Values[sessions.JWTToken] = token
+	//deleting a session
+	delete(session.Values, sessions.SessionType)
 
 	if err != nil {
-		http.Error(w, "Failed To Persist Token", http.StatusInternalServerError)
+		http.Error(w, "failed to save token", http.StatusInternalServerError)
 		return
 	}
 
 	res.Token = token
-	json.Write(w, http.StatusOK, res)
+	res.Session = session
+	json.Write(w, http.StatusNoContent, res)
 }
 
 // godoc
@@ -71,8 +90,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Failure 	401 "Unauthenticated"
 // @Failure		500
 // @Router 		/authentication/logout [post]
-func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	if err := h.service.store.Clear(w, r); err != nil {
+func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
+	if err := h.sess.Clear(w, r); err != nil {
 		http.Error(w, "Failed To Clear Session", http.StatusInternalServerError)
 		return
 	}
@@ -80,7 +99,8 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 type tokenResponse struct {
-	Token string `json:"token"`
+	Token   string `json:"token"`
+	Session any    `json:"-"`
 }
 
 type emailRequest struct {
@@ -98,7 +118,7 @@ type emailRequest struct {
 // @Failure		400 "Bad Request"
 // @Failure 	403 "Forbidden"
 // @Router 		/authentication/password/reset [post]
-func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
 	var req emailRequest
 	err := json.Reader(r, req)
 	if err != nil {
@@ -132,7 +152,7 @@ type passwordResetRequest struct {
 // @Success		200 "Successfully Updated User Password"
 // @Failure		403 "Forbidden"
 // @Router 		/authentication/password [post]
-func (h *AuthHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req passwordResetRequest
 
 	errJsonDecode := json.Reader(r, req)

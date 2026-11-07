@@ -36,10 +36,10 @@ type service struct {
 
 var (
 	// dburl   = os.Getenv("DEV_DB_URL")
-	db_host = getenv("DB_HOST", "localhost")
-	db_user = getenv("DB_USER", "")
-	db_name = getenv("DB_NAME", "go_db")
-	db_port = getenv("DB_PORT", "5432")
+	db_host_unix_local = getenv("DB_HOST_LINUX", "/var/run/postgresql")
+	db_host            = getenv("DB_HOST", "localhost")
+	db_user            = getenv("DB_USER", "") //there is no fallback for this.
+	db_name            = getenv("DB_NAME", "go_db")
 )
 
 // Trying to prevent 2 go routines from both intialising this service
@@ -72,13 +72,13 @@ func New() (Service, error) {
 			},
 		)
 		//sslmode should not be disabled in prod
-		dsn := fmt.Sprintf("host=%s user=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
-			db_host,
+		_ = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable TimeZone=UTC",
+			db_host_unix_local, /*runs local psql 'passwordlessly' */
 			db_user,
 			db_name,
-			db_port)
-
-		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{Logger: logs})
+		)
+		connectionString := os.Getenv("GOOSE_DBSTRING")
+		db, err := gorm.Open(postgres.Open(connectionString), &gorm.Config{Logger: logs})
 
 		if err != nil {
 			// This will not be a connection error, but a DSN parse error or

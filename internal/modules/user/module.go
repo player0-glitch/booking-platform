@@ -1,8 +1,6 @@
 package user
 
 import (
-	"booking-platform/internal/core"
-	"booking-platform/internal/core/authorisation"
 	"net/http"
 
 	chi "github.com/go-chi/chi/v5"
@@ -10,28 +8,33 @@ import (
 )
 
 type Middleware func(http.Handler) http.Handler
-type MiddlewareInterface interface {
-	AuthMiddlware(next http.Handler) http.Handler
+type authenticatorMiddlewareInterface interface {
+	RequiresAuthentication(next http.Handler) http.Handler
+}
+type anonymousMiddlewareInterface interface {
 	EnsureAnonymous(next http.Handler) http.Handler
-}
-type Module struct {
-	userService    UserServiceInterface
-	userHandler    *UserHandler
-	authMiddleware Middleware
-	anonMiddleware Middleware
-}
-
-// Implement the applications's Module interface
-func (m *Module) Name() string {
-	return "User Module"
 }
 
 // Any externel dependencies (like from the core app) needed by
 // this modulei
 type ModuleParams struct {
-	DB                  *gorm.DB
-	AuthMiddleware      Middleware
-	AnonymousMiddleware Middleware
+	DB            *gorm.DB
+	Authorisation authenticatorMiddlewareInterface
+	Anonymous     anonymousMiddlewareInterface
+}
+
+type Module struct {
+	userService UserServiceInterface
+	userHandler *UserHandler
+
+	// Authorise *Middleware
+	Authorise authenticatorMiddlewareInterface
+	Sess      anonymousMiddlewareInterface
+}
+
+// Implement the applications's Module interface
+func (m *Module) Name() string {
+	return "User Module"
 }
 
 func NewModule(params ModuleParams) *Module {
@@ -45,34 +48,31 @@ func NewModule(params ModuleParams) *Module {
 
 	//Return the module to be plugged in
 	return &Module{
-		userService:    userService,
-		userHandler:    userHandler,
-		authMiddleware: params.AuthMiddleware,
-		anonMiddleware: params.AnonymousMiddleware,
+		userService: userService,
+		userHandler: userHandler,
+		Authorise:   params.Authorisation,
+		Sess:        params.Anonymous,
 	}
 }
 
 func (m *Module) RegisterRoutes(r chi.Router) {
 	r.Route("/users", func(browse chi.Router) {
-		browse.Use(m.anonMiddleware) //Perhaps this should be public (no middlware)
+		browse.Use(m.Sess.EnsureAnonymous) //Perhaps this should be public (no middlware)
 		browse.Get("/all", m.userHandler.GetAll)
 		browse.Post("/", m.userHandler.Create)
 
 		browse.Group(func(protected chi.Router) {
-			protected.Use(m.authMiddleware)
+			protected.Use(m.Authorise.RequiresAuthentication)
 
 			//Define the roles required by these routes <MOVE THIS TO THE AppMiddleware
-			protected.Use(authorisation.RequiredRoles(
-				core.RoleAdmin,
-				core.RoleCustomer, /*provision guest*/
-			))
+			protected.Use(m.Sess.EnsureAnonymous)
 			protected.Get("/{id}", m.userHandler.GetById)
 		})
 
 		r.Group(func(protected chi.Router) {
-			protected.Use(m.authMiddleware)
+			protected.Use(m.Authorise.RequiresAuthentication)
 
-			protected.Use(authorisation.RequiredRoles(core.RoleSuperAdmin, core.RoleAdmin))
+			protected.Use(m.Sess.EnsureAnonymous)
 			protected.Delete("/{id}", m.userHandler.DeleteById)
 			protected.Delete("/{id}/soft", m.userHandler.SoftDeleteById)
 		})

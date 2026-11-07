@@ -4,16 +4,18 @@ import (
 	"booking-platform/internal/app"
 	"booking-platform/internal/authentication"
 	"booking-platform/internal/core/adapters"
-	"booking-platform/internal/core/authorisation"
 	"booking-platform/internal/database"
 	"booking-platform/internal/database/seeder"
+	"booking-platform/internal/jwt"
 	"booking-platform/internal/modules/booking"
 	"booking-platform/internal/modules/user"
 	"booking-platform/internal/server"
+	"booking-platform/internal/sessions"
 	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -49,13 +51,19 @@ func gracefulShutdown(apiServer *http.Server, application *app.Application, done
 	done <- true
 }
 
+var (
+	jwtSecret       = os.Getenv("JWT_SECRET")
+	sessionHashKey  = os.Getenv("SESSION_KEY_SECRET")
+	sessionBlockKey = os.Getenv("SESSION_BLOCK_SECRET")
+)
+
 func main() {
 	//A global logger for debugging so we can se what file and line made the log
 	Logger.SetReportCaller(true)
 	//init database
 	databaseContext, err := database.New()
 	if err != nil {
-		log.Fatalf("Failed To Start Database Service: %s", err)
+		Logger.Fatalf("Failed To Start Database Service: %s", err)
 	}
 	//defer closing the connection
 	defer func() {
@@ -64,43 +72,50 @@ func main() {
 			Logger.Printf("Failed To Close Database Connection: %v", err)
 		}
 	}()
-	//Initialise the modularized application in reverse order, what's on top must
-	// be dependent on by what's at the bottom
+	//Initialise the modularized application in reverse order, what's on bottom
+	// depeneds on what's above it
 	// Building Up The Core Components
-	fmt.Printf("Building Up The Core Components")
-	authorisationRepo := authorisation.NewRepository(databaseContext.DB())
-	_ = authorisation.NewService(
-		authorisationRepo,
-		database.NewGormTransactor(databaseContext.DB()))
+	fmt.Println("Building Up The Core Components")
+	fmt.Println("Building JWT")
+	jwtSvc := jwt.NewJWTService(jwtSecret)
+
+	fmt.Println("Building Application Sessions")
+	sess := sessions.NewSesssionStore(databaseContext.DB(),
+		[]byte(sessionHashKey),
+		[]byte(sessionBlockKey),
+		database.NewGormTransactor(databaseContext.DB()),
+	)
+	sessStore := sessions.NewManager(sess, "booking_app_sess")
+	sessMiddleware := sessions.NewSessionMiddleware(sessStore)
 
 	fmt.Println("Registering Modules")
 
-	authModule := authentication.NewModule(authentication.ModuleParams{
+	authenticationModule := authentication.NewModule(authentication.ModuleParams{
 		UserReaderInterface: fulfillAuthUserContract(databaseContext),
-		Permissions:         authorisationRepo,
+		DB:                  databaseContext.DB(),
+		JWTGenerator:        jwtSvc,
+		HandlerStoreManager: sessStore,
 	})
-	fmt.Printf("Registered %s Module \n", authModule.Name())
+	fmt.Printf("Registered Module 1 as %s\n", authenticationModule.Name())
 
 	userModule := user.NewModule(user.ModuleParams{
-		DB:                  databaseContext.DB(),
-		AuthMiddleware:      authModule.AppMiddleware.AuthMiddlware,
-		AnonymousMiddleware: authModule.AppMiddleware.EnsureAnonymous,
+		DB:            databaseContext.DB(),
+		Authorisation: authenticationModule.Middleware,
+		Anonymous:     sessMiddleware,
 	})
-	fmt.Printf("Registered %s Module \n", userModule.Name())
+	fmt.Printf("Registered  Module 2 as %s\n", userModule.Name())
 
 	bookingModule := booking.NewModule(booking.ModuleParams{
-		DB:                  databaseContext.DB(),
-		Transactor:          database.NewGormTransactor(databaseContext.DB()),
-		AuthMiddleware:      authModule.AppMiddleware.AuthMiddlware,
-		AnonymousMiddleware: authModule.AppMiddleware.EnsureAnonymous,
+		DB:         databaseContext.DB(),
+		Transactor: database.NewGormTransactor(databaseContext.DB()),
 	})
-	fmt.Printf("Registered %s Module \n", bookingModule.Name())
+	fmt.Printf("Registered Module 3 %s\n", bookingModule.Name())
 
 	//Run any seeder before the app starts
 	runSeeders(context.Background(), databaseContext)
 
 	app, errAppStart := app.NewApplication(
-		authModule,
+		authenticationModule,
 		userModule,
 		bookingModule,
 		// catalogueModule,

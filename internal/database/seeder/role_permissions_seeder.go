@@ -1,9 +1,10 @@
 package seeder
 
 import (
-	"booking-platform/internal/core/authorisation"
-	"booking-platform/internal/database"
 	"context"
+
+	"booking-platform/internal/authorisation"
+	"booking-platform/internal/database"
 
 	"gorm.io/gorm/clause"
 )
@@ -57,6 +58,7 @@ var roles = []role{
 		isSystem:    false,
 	},
 }
+
 var permissions = []permission{
 	{"users.read", "Read user records"},
 	{"users.manage", "Create and manage user records"},
@@ -92,6 +94,7 @@ func (s *Seeder) seedRoles(ctx context.Context) error {
 	}
 	return nil
 }
+
 func (s *Seeder) seedPermission(ctx context.Context) error {
 	permissionsToInsert := make([]authorisation.Permission, len(permissions))
 	for k, v := range permissions {
@@ -100,7 +103,7 @@ func (s *Seeder) seedPermission(ctx context.Context) error {
 			Description:   v.description,
 		}
 	}
-	//Bulk Insert
+	// Bulk Insert
 	if err := s.DB.WithContext(ctx).Table("permissions").
 		Clauses(clause.OnConflict{DoNothing: true}).Create(&permissionsToInsert).Error; err != nil {
 		return err
@@ -109,12 +112,12 @@ func (s *Seeder) seedPermission(ctx context.Context) error {
 }
 
 func (s *Seeder) seedRolePermissions(ctx context.Context) error {
-	//Querying the database directly avoid round trips and memory overhead using GORM
-	//Using raw SQL is the best approach, as data does not need to be moved back and forth between
-	//the database and GORM (so no need for the Object Relational Mapper). This is
-	//database administrative work
+	// Querying the database directly avoid round trips and memory overhead using GORM
+	// Using raw SQL is the best approach, as data does not need to be moved back and forth between
+	// the database and GORM (so no need for the Object Relational Mapper). This is
+	// database administrative work
 
-	//Super Admin Gets All The Permissions
+	// Super Admin Gets All The Permissions
 	query := `
 	-- Super Admin gets all the permissions hence the Cross join
 	INSERT INTO role_permissions (role_id,permission_id)
@@ -132,6 +135,8 @@ func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 	JOIN permissions p ON p.permission_key IN (?,?,?,?,?,?,?)
 	WHERE r.role_key = 'admin'
 	
+	UNION ALL
+
 	SELECT r.id, p.id
 	FROM roles r
 	JOIN permissions p ON p.permission_key IN (?,?)
@@ -149,10 +154,6 @@ func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 	-- Execute this only since on all Unions
 	ON CONFLICT DO NOTHING;
 	`
-	orgAdminKey := []any{
-		"organisations.inventory.manage",
-		"organisations.user.manage",
-	}
 	adminKey := []any{
 		"organizations.read",
 		"organizations.manage",
@@ -162,6 +163,12 @@ func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 		"services.read",
 		"services.manage",
 	}
+
+	orgAdminKey := []any{
+		"organisations.inventory.manage",
+		"organisations.user.manage",
+	}
+
 	staffKey := []any{
 		"bookings.create",
 		"services.manage",
@@ -170,18 +177,19 @@ func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 		"services.read",
 	}
 	var args []any
-	args = append(args, orgAdminKey...)
+
 	args = append(args, adminKey...)
+	args = append(args, orgAdminKey...)
 	args = append(args, staffKey...)
 
-	//Bulk insert in a transaction
+	// Bulk insert in a transaction
 	err := s.Trx.Transaction(ctx, func(txCtx context.Context) error {
 		db := database.DbFromTransaction(txCtx, s.DB)
 		if err := db.Exec(query, args...).Error; err != nil {
-			//Triggers a rollback
+			// Triggers a rollback
 			return err
 		}
-		return nil //automatically commit when done
+		return nil // automatically commit when done
 	})
 	return err
 }

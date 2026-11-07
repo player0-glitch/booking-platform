@@ -4,28 +4,22 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
-
-	"github.com/gorilla/sessions"
 )
 
 func (s *Server) Handler() http.Handler {
-
+	csrfProtection := http.NewCrossOriginProtection()
+	if csrfErr := csrfProtection.AddTrustedOrigin("http://localhost:8080"); csrfErr != nil {
+		log.Panicf("Failed To Add Trusted Origin: %v", csrfErr)
+	}
 	// Register routes
 	s.app.Router.Get("/", s.HelloWorldHandler)
 
 	s.app.Router.Get("/health", s.healthHandler)
 	s.app.Router.Post("/hello", s.HelloWorldHandler)
 	// Wrap the mux with CORS middleware
-	return s.corsMiddleware(s.app.Router)
+	// return s.corsMiddleware(s.app.Router)
+	return csrfProtection.Handler(s.corsMiddleware(s.app.Router))
 }
-
-// Creating a cookie store
-// this will be used to 'rememeber' guests who visit the account
-var (
-	//Find a make command that can be used to create 256bit key
-	store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
-)
 
 func (s *Server) corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

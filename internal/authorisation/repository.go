@@ -31,7 +31,7 @@ func (r *Repository) HasPermissions(
 ) (bool, error) {
 	//I think for performance reasons and since we're not returning
 	//any data.Select (1) should suffice our exisistence check
-	var count int64 //should not be used
+	var count int64
 	dbQuery := r.db.WithContext(ctx).
 		Table("user_role_grants AS urg").
 		Select("1").

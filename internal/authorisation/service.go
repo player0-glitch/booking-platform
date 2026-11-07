@@ -36,6 +36,16 @@ type grantRoleInput struct {
 	ExpiresAt      *time.Time
 }
 
+// HasPermissions exists to mainly be used by the Authorisation middleware
+func (s *Service) HasPermissions(
+	ctx context.Context,
+	userID uuid.UUID,
+	organisationID *uuid.UUID,
+	permission PermissionKey,
+) (bool, error) {
+	return s.repo.HasPermissions(ctx, userID, string(permission), organisationID)
+}
+
 func (s *Service) GrantRole(
 	ctx context.Context,
 	input grantRoleInput) (*RoleGrant, error) {
