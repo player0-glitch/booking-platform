@@ -18,25 +18,22 @@ func NewUserRepo(db *gorm.DB) *UserRepository {
 	}
 }
 
-// godoc
-// This creates a new user in storage defaulted to a role of Customer
+// Create This creates a new user in storage defaulted to a role of Customer
 func (r *UserRepository) Create(ctx context.Context, user *User) error {
 	return r.db.Create(user).Error
 }
 
-func (r *UserRepository) SeedUserIfNotExist(ctx context.Context, user *User, roleId int) error {
-
+func (r *UserRepository) SeedUserIfNotExist(ctx context.Context, user *User) error {
 	result := r.db.WithContext(ctx).
 		Clauses(clause.OnConflict{DoNothing: true}).Create(user)
-	//on a conflict nothing is injected into the result.RowsAffected
+	// on a conflict nothing is injected into the result.RowsAffected
 	return result.Error
 }
 
-func (r *UserRepository) GetById(ctx context.Context, id uuid.UUID) (*User, error) {
+func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*User, error) {
 	var user User
 	err := r.db.WithContext(ctx).
 		First(&user, id).Error
-
 	if err != nil {
 		return nil, errRecordNotFound
 	}
@@ -59,26 +56,25 @@ func (r *UserRepository) GetAll(ctx context.Context) ([]User, error) {
 		Order("created_at DESC").
 		// Limit(50).
 		Find(&users).Error
-
 	if err != nil {
 		return nil, err
 	}
 	return users, nil
 }
 
-// Permanently delete by id but i might need to not use this
-func (r *UserRepository) DeleteById(ctx context.Context, id uuid.UUID) error {
+// DeleteByID Permanently delete by id but i might need to not use this
+func (r *UserRepository) DeleteByID(ctx context.Context, id uuid.UUID) error {
 	var user User
 
 	return r.db.Unscoped().WithContext(ctx).Delete(&user, id).Error
 }
 
-func (r *UserRepository) SoftDeleteById(ctx context.Context, id uuid.UUID) error {
+func (r *UserRepository) SoftDeleteByID(ctx context.Context, id uuid.UUID) error {
 	var user User
 	return r.db.WithContext(ctx).Delete(&user, id).Error
 }
 
-// Permanently delete by email but i might need to not use this
+// DeleteByEmail delete by email but i might need to not use this
 func (r *UserRepository) DeleteByEmail(ctx context.Context, email string) error {
 	/*this permanently deletes the records instead of setting
 	*  deleted_at column to a timestamp (Soft Delete)

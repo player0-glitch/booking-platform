@@ -1,11 +1,12 @@
 package seeder
 
 import (
-	user "booking-platform/internal/modules/user"
 	"context"
 	"fmt"
 	"os"
 	"strings"
+
+	user "booking-platform/internal/modules/user"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -14,7 +15,6 @@ var (
 	superAdminPassword = os.Getenv("PASSWORD_SUPER_ADMIN")
 	adminPassword      = os.Getenv("PASSWORD_ADMIN")
 	customerPassword   = os.Getenv("PASSWORD_CUSTOMER")
-	guestPassword      = ""
 )
 
 type seedUser struct {
@@ -54,7 +54,7 @@ var userSeeds = []seedUser{
 func (s *Seeder) seedUsers(ctx context.Context) error {
 	passwords := make(map[string]string, len(userSeeds))
 	var missing []string
-	//Ensure existence
+	// Ensure existence
 	for i := 0; i < len(userSeeds)-1; i++ {
 		pw := userSeeds[i]
 		if strings.TrimSpace(pw.PasswordEnv) == "" {
@@ -64,15 +64,15 @@ func (s *Seeder) seedUsers(ctx context.Context) error {
 		passwords[userSeeds[i].PasswordEnv] = pw.PasswordEnv
 	}
 	if len(missing) > 0 {
-		return fmt.Errorf("Missing Seed Passwords in .env: %s", strings.Join(missing, ", "))
+		return fmt.Errorf("missing seed passwords in .env: %s", strings.Join(missing, ", "))
 	}
 
-	//hash the passwords (all besides the Guest)
+	// hash the passwords (all besides the Guest)
 	hashes := make(map[string]string, len(userSeeds))
 	for _, s := range userSeeds {
 		b, err := bcrypt.GenerateFromPassword([]byte(passwords[s.PasswordEnv]), bcrypt.DefaultCost)
 		if err != nil {
-			return fmt.Errorf("Failed hashing password for %s: %w",
+			return fmt.Errorf("failed hashing password for %s: %w",
 				s.Email, err)
 		}
 		hashes[s.PasswordEnv] = string(b)
@@ -92,7 +92,7 @@ func (s *Seeder) seedUsers(ctx context.Context) error {
 		// userRepo.SeedUserIfNotExist(ctx, &u, u.RoleId)
 	}
 	if err := s.userRepo.BatchSeedUser(ctx, usersToInsert); err != nil {
-		return fmt.Errorf("Failed To Seed Users: %v", err.Error())
+		return fmt.Errorf("failed to seed users: %v", err.Error())
 	}
 	return nil
 }

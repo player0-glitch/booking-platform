@@ -1,19 +1,21 @@
+// Package seeder is used as centralised seeder. Seed order matters
 package seeder
 
 import (
-	"booking-platform/internal/database"
-	user "booking-platform/internal/modules/user"
 	"context"
 	"errors"
+
+	"booking-platform/internal/database"
+	user "booking-platform/internal/modules/user"
 
 	"gorm.io/gorm"
 )
 
 var (
-	ErrFailedUserSeed            = errors.New("Failed To Seed Users")
-	ErrFailedRoleSeed            = errors.New("Failed To Seed Roles")
-	ErrFailedPermissionSeed      = errors.New("Failed To Seed Permissions")
-	ErrFailedRolePermissionsSeed = errors.New("Failed To Seed Role Permissions Table")
+	ErrFailedUserSeed            = errors.New("failed to seed users")
+	ErrFailedRoleSeed            = errors.New("failed to seed roles")
+	ErrFailedPermissionSeed      = errors.New("failed to seed permissions")
+	ErrFailedRolePermissionsSeed = errors.New("failed to seed role permissions table")
 )
 
 type UserSeederInterface interface {
@@ -37,6 +39,7 @@ func NewSeeder(db *gorm.DB, params SeederParams) *Seeder {
 		Trx:      params.Transaction,
 	}
 }
+
 func (s *Seeder) Seed(ctx context.Context) error {
 	if err := s.seedUsers(ctx); err != nil {
 		return ErrFailedUserSeed

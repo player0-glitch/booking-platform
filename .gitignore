@@ -13,6 +13,10 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+nnode_modules/
+package.json
+.air.toml
+.air.worker.toml
 
 # Go workspace file
 go.work
@@ -30,7 +34,7 @@ main
 *templ.go
 
 # OS X generated file
-.DS_Store
+**/.DS_Store
 
 # sqlite3 migrations
 storage/*.sqlite

@@ -1,3 +1,4 @@
+// Package database
 package database
 
 import (
@@ -25,22 +26,20 @@ type Service interface {
 	// It returns an error if the connection cannot be closed.
 	Close() error
 	// DB returns the underlying GORM database instance that should
-	//only exist once I think
+	// only exist once I think
 	DB() *gorm.DB
 }
 
 type service struct {
-	// db *sql.DB
 	db *gorm.DB
 }
 
-var (
-	// dburl   = os.Getenv("DEV_DB_URL")
-	db_host_unix_local = getenv("DB_HOST_LINUX", "/var/run/postgresql")
-	db_host            = getenv("DB_HOST", "localhost")
-	db_user            = getenv("DB_USER", "") //there is no fallback for this.
-	db_name            = getenv("DB_NAME", "go_db")
-)
+// var (
+// 	db_host_unix_local = getenv("DB_HOST_LINUX", "/var/run/postgresql")
+// 	db_host            = getenv("DB_HOST", "localhost")
+// 	db_user            = getenv("DB_USER", "") // there is no fallback for this.
+// 	db_name            = getenv("DB_NAME", "go_db")
+// )
 
 // Trying to prevent 2 go routines from both intialising this service
 var (
@@ -48,13 +47,13 @@ var (
 	dbOnce     sync.Once
 )
 
-func getenv(key, fallback string) string {
-	val := os.Getenv(key)
-	if val == "" {
-		return fallback
-	}
-	return val
-}
+// func getenv(key, fallback string) string {
+// 	val := os.Getenv(key)
+// 	if val == "" {
+// 		return fallback
+// 	}
+// 	return val
+// }
 
 func New() (Service, error) {
 	var initError error
@@ -63,23 +62,23 @@ func New() (Service, error) {
 		logs := logger.New(
 			log.New(os.Stdout, "\r\n", log.LstdFlags),
 			logger.Config{
-				//show all db queries slower than 200ms
+				// show all db queries slower than 200ms
 				SlowThreshold:             time.Millisecond * 200,
 				LogLevel:                  logger.Info,
 				IgnoreRecordNotFoundError: true,
-				ParameterizedQueries:      true, //Don't include params in SQL logs
+				ParameterizedQueries:      true, // Don't include params in SQL logs
 				Colorful:                  true,
 			},
 		)
-		//sslmode should not be disabled in prod
-		_ = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable TimeZone=UTC",
-			db_host_unix_local, /*runs local psql 'passwordlessly' */
-			db_user,
-			db_name,
-		)
+		// sslmode should not be disabled in prod
+		// _ = fmt.Sprintf("host=%s user=%s dbname=%s sslmode=disable TimeZone=UTC",
+		// 	db_host_unix_local, /*runs local psql 'passwordlessly' */
+		// 	db_user,
+		// 	db_name,
+		// )
+
 		connectionString := os.Getenv("GOOSE_DBSTRING")
 		db, err := gorm.Open(postgres.Open(connectionString), &gorm.Config{Logger: logs})
-
 		if err != nil {
 			// This will not be a connection error, but a DSN parse error or
 			initError = err
@@ -87,18 +86,20 @@ func New() (Service, error) {
 			return
 		}
 
-		//ping db to make sure it is connected once.
+		// ping db to make sure it is connected once.
 		sqlDB, err := db.DB()
 		if err != nil {
 			initError = err
 			log.Fatal(err)
 			return
 		}
+
 		if err := sqlDB.Ping(); err != nil {
 			initError = err
 			log.Fatal(err)
 			return
 		}
+
 		dbInstance = &service{
 			db: db,
 		}
@@ -118,7 +119,7 @@ func (s *service) Health() map[string]string {
 
 	stats := make(map[string]string)
 
-	//Get the underlying *sql.DB from GORM
+	// Get the underlying *sql.DB from GORM
 	sqlDB, err := s.db.DB()
 	if err != nil {
 		stats["status"] = "down"
@@ -174,7 +175,6 @@ func (s *service) Health() map[string]string {
 // If an error occurs while closing the connection, it returns the error.
 func (s *service) Close() error {
 	sqlDB, err := s.db.DB()
-
 	if err != nil {
 		return err
 	}

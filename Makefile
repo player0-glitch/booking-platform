@@ -25,7 +25,7 @@ setup:
 	@make redis-install
 
 dev: 
-	@make redis-install
+# 	@make redis-install
 	@echo "Running dev mode in 3 different thread"
 	@make -j 3 api worker frontend
 

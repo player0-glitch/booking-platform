@@ -26,7 +26,6 @@ func NewUserService(userRepository UserRepository) *userService {
 }
 
 func (u *userService) CreateUser(ctx context.Context, name, lastName, email, password string) (*userRequest, error) {
-
 	passwordHash, err := hashPassword(password)
 	if err != nil {
 		return nil, fmt.Errorf("Password hashing failed: %w", err)
@@ -48,7 +47,8 @@ func (u *userService) CreateUser(ctx context.Context, name, lastName, email, pas
 }
 
 func (u *userService) GetByEmail(ctx context.Context,
-	email string) (*userRequest, error) {
+	email string,
+) (*userRequest, error) {
 	user, err := u.userRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
@@ -57,8 +57,8 @@ func (u *userService) GetByEmail(ctx context.Context,
 	return &dto, nil
 }
 
-func (u *userService) GetById(ctx context.Context, id uuid.UUID) (*userRequest, error) {
-	user, err := u.userRepo.GetById(ctx, id)
+func (u *userService) GetByID(ctx context.Context, id uuid.UUID) (*userRequest, error) {
+	user, err := u.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -66,17 +66,16 @@ func (u *userService) GetById(ctx context.Context, id uuid.UUID) (*userRequest, 
 	return &dto, nil
 }
 
-func (u *userService) DeleteById(ctx context.Context, id uuid.UUID) error {
-	return u.userRepo.DeleteById(ctx, id)
+func (u *userService) DeleteByID(ctx context.Context, id uuid.UUID) error {
+	return u.userRepo.DeleteByID(ctx, id)
 }
 
 func (s *userService) SoftDelete(ctx context.Context, id uuid.UUID) error {
-	return s.userRepo.SoftDeleteById(ctx, id)
+	return s.userRepo.SoftDeleteByID(ctx, id)
 }
 
 func (s *userService) GetAll(ctx context.Context) ([]userRequest, error) {
 	users, err := s.userRepo.GetAll(ctx)
-
 	if err != nil {
 		return nil, fmt.Errorf("A User Model Array Couldn't Be formed: %v", err)
 	}
@@ -90,7 +89,7 @@ func (s *userService) GetAll(ctx context.Context) ([]userRequest, error) {
 }
 
 func hashPassword(password string) (string, error) {
-	//automatic salt generation happens under the hood
+	// automatic salt generation happens under the hood
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", fmt.Errorf("Failed to generate hashed password: %w", err)

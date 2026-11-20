@@ -1,6 +1,15 @@
 package main
 
 import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"booking-platform/internal/app"
 	"booking-platform/internal/authentication"
 	"booking-platform/internal/core/adapters"
@@ -11,14 +20,6 @@ import (
 	"booking-platform/internal/modules/user"
 	"booking-platform/internal/server"
 	"booking-platform/internal/sessions"
-	"context"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 
 	Logger "github.com/sirupsen/logrus"
 )
@@ -58,21 +59,21 @@ var (
 )
 
 func main() {
-	//A global logger for debugging so we can se what file and line made the log
+	// A global logger for debugging so we can se what file and line made the log
 	Logger.SetReportCaller(true)
-	//init database
+	// init database
 	databaseContext, err := database.New()
 	if err != nil {
 		Logger.Fatalf("Failed To Start Database Service: %s", err)
 	}
-	//defer closing the connection
+	// defer closing the connection
 	defer func() {
 		err := databaseContext.Close()
 		if err != nil {
 			Logger.Printf("Failed To Close Database Connection: %v", err)
 		}
 	}()
-	//Initialise the modularized application in reverse order, what's on bottom
+	// Initialise the modularized application in reverse order, what's on bottom
 	// depeneds on what's above it
 	// Building Up The Core Components
 	fmt.Println("Building Up The Core Components")
@@ -111,7 +112,7 @@ func main() {
 	})
 	fmt.Printf("Registered Module 3 %s\n", bookingModule.Name())
 
-	//Run any seeder before the app starts
+	// Run any seeder before the app starts
 	runSeeders(context.Background(), databaseContext)
 
 	app, errAppStart := app.NewApplication(
@@ -123,7 +124,7 @@ func main() {
 	if errAppStart != nil {
 		log.Fatalf("%s", errAppStart.Error())
 	}
-	//Starting the application with context
+	// Starting the application with context
 	if err := app.Start(context.Background()); err != nil {
 		log.Fatalf("Failed To Start Application: %s", err.Error())
 	}
@@ -170,5 +171,5 @@ func runSeeders(ctx context.Context, db database.Service) {
 		Transaction: database.NewGormTransactor(db.DB()),
 	})
 	fmt.Print("Running Seeder")
-	seeder.Seed(ctx)
+	_ = seeder.Seed(ctx)
 }

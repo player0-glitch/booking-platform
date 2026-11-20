@@ -114,7 +114,7 @@ func (s *SessionStore) Save(
 	err = s.db.WithContext(r.Context()).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "id"}},
 		DoUpdates: clause.Assignments(map[string]any{
-			"date":       record.Data,
+			"data":       record.Data,
 			"expires_at": record.ExpiresAt,
 			"updated_at": record.base.UpdatedAt,
 		}),

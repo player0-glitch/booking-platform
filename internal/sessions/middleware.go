@@ -1,6 +1,9 @@
 package sessions
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 type SessionMiddleware struct {
 	manager *Manager
@@ -19,6 +22,7 @@ func (m *SessionMiddleware) EnsureAnonymous(next http.Handler) http.Handler {
 			http.Error(w, "unable to load session", http.StatusInternalServerError)
 			return
 		}
+		fmt.Printf("This is what is in the session right now: %+v\n", sess)
 		// Authenticated User (already exists that's how they logged in to be 'authenticated' duh)
 		if sess.Values[SessionType] != "anonymous" {
 			sess.Values[SessionType] = "anonymous"

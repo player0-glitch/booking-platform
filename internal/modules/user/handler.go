@@ -1,12 +1,12 @@
 package user /*provision guest*/
 
 import (
-	json "booking-platform/internal/core/json"
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
 
-	"context"
+	json "booking-platform/internal/core/json"
 
 	chi "github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -15,8 +15,8 @@ import (
 type UserServiceInterface interface {
 	CreateUser(ctx context.Context, name, lastName, email, password string) (*userRequest, error)
 	GetAll(ctx context.Context) ([]userRequest, error)
-	GetById(ctx context.Context, id uuid.UUID) (*userRequest, error)
-	DeleteById(ctx context.Context, id uuid.UUID) error
+	GetByID(ctx context.Context, id uuid.UUID) (*userRequest, error)
+	DeleteByID(ctx context.Context, id uuid.UUID) error
 	SoftDelete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -40,7 +40,7 @@ func NewUserController(userSvc UserServiceInterface) *UserHandler {
 // @Router		/users	[post]
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createUserRequest
-	//parse the json request
+	// parse the json request
 	errJsonDecoder = json.Reader(r, &req)
 
 	if errJsonDecoder != nil {
@@ -87,17 +87,16 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 // @Failure		403
 // @Failure		404
 // @Router		/users/{id}	[get]
-func (c *UserHandler) GetById(w http.ResponseWriter, r *http.Request) {
-
+func (c *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	userId, errParse := uuid.Parse(id)
+	userID, errParse := uuid.Parse(id)
 
 	if errParse != nil {
 		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
 
-	user, errSvc := c.userService.GetById(r.Context(), userId)
+	user, errSvc := c.userService.GetByID(r.Context(), userID)
 
 	if errSvc != nil {
 		json.WriteError(w, http.StatusNotFound,
@@ -109,7 +108,6 @@ func (c *UserHandler) GetById(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusAccepted, user)
 }
 
-// User godoc
 // @Security	BearerAuth
 // @Summary		Delete user by id
 // @Tags		users
@@ -119,17 +117,17 @@ func (c *UserHandler) GetById(w http.ResponseWriter, r *http.Request) {
 // @Failure		403
 // @Failure 	404
 // @Router		/users/{id}	[delete]
-func (c *UserHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
+func (c *UserHandler) DeleteByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	fmt.Printf("Id before parse: %s\n", id)
-	userId, errParse := uuid.Parse(id)
+	userID, errParse := uuid.Parse(id)
 
-	fmt.Printf("Parsed Id: %s\n", userId)
+	fmt.Printf("Parsed Id: %s\n", userID)
 	if errParse != nil {
 		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id "+errParse.Error())
 		return
 	}
-	err := c.userService.DeleteById(r.Context(), userId)
+	err := c.userService.DeleteByID(r.Context(), userID)
 	if err != nil {
 		json.WriteError(w, http.StatusNotFound, "User Not found")
 		return
@@ -137,7 +135,6 @@ func (c *UserHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusAccepted, "User Deleted")
 }
 
-// User godoc
 // @Security	BearerAuth
 // @Summary		Solf delete user by id
 // @Tags		users
@@ -148,15 +145,15 @@ func (c *UserHandler) DeleteById(w http.ResponseWriter, r *http.Request) {
 // @Failure		403
 // @Failure 	404
 // @Router		/users/{id}/soft	[delete]
-func (c *UserHandler) SoftDeleteById(w http.ResponseWriter, r *http.Request) {
+func (c *UserHandler) SoftDeleteByID(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	userId, errParse := uuid.Parse(id)
+	userID, errParse := uuid.Parse(id)
 
 	if errParse != nil {
 		json.WriteError(w, http.StatusBadRequest, "invalid request, Check user id")
 		return
 	}
-	err := c.userService.SoftDelete(r.Context(), userId)
+	err := c.userService.SoftDelete(r.Context(), userID)
 	if err != nil {
 		json.WriteError(w, http.StatusNotFound, "User Not found")
 		return

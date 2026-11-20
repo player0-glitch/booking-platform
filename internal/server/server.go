@@ -26,22 +26,19 @@ type Params struct {
 
 func NewServer(params Params) *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	// database, _ := database.New()
 
-	//Init server
+	// Init server
 	serverInstance := &Server{
 		port: port,
-		// port:params.Port
-		//Pass in a pointer of applications
+		// Pass in a pointer of applications
 		app: params.Application,
 		db:  params.Database,
 	}
 
 	// Declare Server config
 	server := &http.Server{
-		Addr:    fmt.Sprintf(":%d", serverInstance.port),
-		Handler: serverInstance.Handler(),
-		// Handler:      NewServer.app.Router,
+		Addr:         fmt.Sprintf(":%d", serverInstance.port),
+		Handler:      serverInstance.Handler(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 30 * time.Second,
