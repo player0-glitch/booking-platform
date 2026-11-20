@@ -13,11 +13,11 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-nnode_modules/
+node_modules/
 package.json
 .air.toml
 .air.worker.toml
-
+frontend/package.json
 # Go workspace file
 go.work
 tmp/
