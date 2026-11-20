@@ -107,7 +107,7 @@ func (s *Service) Login(ctx context.Context, email, password string) (string, er
 
 	// successful login will remove you from the attempts store
 	s.loginInfo.Remove(user.Email)
-	return s.jwt.CreateNewToken(user.Id)
+	return s.jwt.CreateNewToken(user.ID)
 }
 
 // TODO: Eventually remove string return

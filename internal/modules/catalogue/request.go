@@ -1,0 +1,2 @@
+// Package catalogue
+package catalogue

@@ -25,7 +25,6 @@ type ModuleParams struct {
 	JWTGenerator        JwtTokenGenerator
 }
 
-// Implement this and RegisterRoutes so it can be plugged/injected into the app
 func (m *Module) Name() string {
 	return "Auth Module"
 }
@@ -35,7 +34,7 @@ func NewModule(params ModuleParams) *Module {
 	trx := database.NewGormTransactor(params.DB)
 	// Password Repo Interface
 	passwordRepo := NewPasswordRepository(params.DB)
-	//Service
+	// Service
 	svc := NewService(
 		params.UserReaderInterface,
 		params.JWTGenerator,

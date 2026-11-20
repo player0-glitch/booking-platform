@@ -7,7 +7,7 @@ import (
 )
 
 type Role struct {
-	Id          int32 `gorm:"primaryKey"`
+	ID          int32 `gorm:"primaryKey"`
 	RoleName    string
 	RoleKey     string `gorm:"size:50"`
 	Description string
@@ -22,7 +22,7 @@ func (Role) TableName() string {
 }
 
 type Permission struct {
-	Id            int32  `gorm:"primaryKey"`
+	ID            int32  `gorm:"primaryKey"`
 	PermissionKey string `gorm:"size:120;not null"`
 	Description   string
 	CreatedAt     time.Time
@@ -34,10 +34,9 @@ func (Permission) TableName() string {
 	return "Permissions"
 }
 
-// I prefer to have all my tables as struct i can see in code
 type RolePermissions struct {
-	RoleId        int32 `gorm:"primaryKey"`
-	PermissionsId int32 `gorm:"primaryKey"`
+	RoleID        int32 `gorm:"primaryKey"`
+	PermissionsID int32 `gorm:"primaryKey"`
 	CreatedAt     time.Time
 }
 
@@ -47,9 +46,9 @@ func (RolePermissions) TableName() string {
 
 type RoleGrant struct {
 	ID             uuid.UUID `gorm:"type:uuid;primaryKey"`
-	UserId         uuid.UUID `gorm:"type:uuid;foreignKey"`
-	OrganisationId uuid.UUID `gorm:"type:uuid;foreignKey"`
-	RoleId         int32     `gorm:"foreignKey"`
+	UserID         uuid.UUID `gorm:"type:uuid;foreignKey"`
+	OrganisationID uuid.UUID `gorm:"type:uuid;foreignKey"`
+	RoleID         int32     `gorm:"foreignKey"`
 	GrantedBy      uuid.UUID `gorm:"type:uuid;foreignKey"`
 	ExpiresAt      *time.Time
 	RevokedAt      *time.Time

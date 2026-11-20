@@ -1,3 +1,4 @@
+// Package catalogue orgranisation,resource,services make up the business catalogue
 package catalogue
 
 import (
@@ -6,39 +7,58 @@ import (
 	"github.com/google/uuid"
 )
 
-// orgranisation,resource,services make up the business catalogue
+type status string
 
-type Orgranisation struct {
+const (
+	statusActive   status = "active"
+	statusInActive status = "inactive"
+)
+
+type Organisation struct {
 	Base     core.Base
 	Slug     string `gorm:"uniqueIndex;not null"`
 	Status   status `gorm:"type:text;default:'active'"`
 	TimeZone string
 }
 
-// Tells gorm which sql table to map from
-func (Orgranisation) TableName() string {
+func (Organisation) TableName() string {
 	return "organisations"
 }
 
 type Resource struct {
-	Base            core.Base
-	OrgranisationId uuid.UUID `gorm:"uniqueIndex:idx_organisation_id_name"`
-	Kind            string
-	Name            string `gorm:"uniqueIndex:idx_organisation_id_name"`
-	BookingMode     string `gorm:"default:exclusive"`
-	Capacity        int
-	Status          status `gorm:"type:text;default:'active'"`
-	//This is for eager loading in joining query
-	Orgranisation Orgranisation `gorm:"foreignKey:OrganisationId"`
+	Base           core.Base
+	OrganisationID uuid.UUID `gorm:"uniqueIndex:idx_organisation_id_name"`
+	Kind           string
+	Name           string `gorm:"uniqueIndex:idx_organisation_id_name"`
+	BookingMode    string `gorm:"default:exclusive"`
+	Capacity       int
+	Status         status `gorm:"type:text;default:'active'"`
+	// This is for eager loading in joining query
+	Organisation Organisation `gorm:"foreignKey:OrganisationID"`
 }
 
 func (Resource) TableName() string {
 	return "resources"
 }
 
+type mode string
+
+const (
+	durationVariable mode = "variable"
+	durationFixed    mode = "fixed"
+)
+
+type pricingUnit string
+
+const (
+	per_Booking pricingUnit = "per booking"
+	per_Unit    pricingUnit = "per unit"
+	per_Hour    pricingUnit = "per hour"
+)
+
 type Service struct {
 	Base                core.Base
-	OrgranisationId     uuid.UUID `gorm:"uniqueIndex:idx_organisation_id_name"`
+	OrganisationID      uuid.UUID `gorm:"uniqueIndex:idx_organisation_id_name"`
 	Name                string    `gorm:"uniqueIndex:idx_organisation_id_name"`
 	DurationMode        mode      `gorm:"type:text"`
 	DurationMinutes     int
@@ -52,8 +72,8 @@ type Service struct {
 	Currency            string      `gorm:"type:char(3)"`
 	RequiresApproval    bool        `gorm:"default:false"`
 	Status              status      `gorm:"type:text;default:'active'"`
-	//This is for eager loading in joining query
-	Orgranisation Orgranisation `gorm:"foreignKey:OrganisationId"`
+	// This is for eager loading in joining query
+	Organisation Organisation `gorm:"foreignKey:OrganisationID"`
 }
 
 func (Service) TableName() string {
@@ -61,9 +81,9 @@ func (Service) TableName() string {
 }
 
 type ResourceServices struct {
-	//Composite Keys
-	ResourceId         uuid.UUID `gorm:"type:uuid;primaryKey;column:resource_id"`
-	ServiceId          uuid.UUID `gorm:"type:uuid;primaryKey;index:idx_resource_services_service_id;column:service_id"`
+	// Composite Keys
+	ResourceID         uuid.UUID `gorm:"type:uuid;primaryKey;column:resource_id"`
+	ServiceID          uuid.UUID `gorm:"type:uuid;primaryKey;index:idx_resource_services_service_id;column:service_id"`
 	PriceOverrideMinor *int
 }
 

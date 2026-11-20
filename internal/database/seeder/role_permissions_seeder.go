@@ -80,7 +80,7 @@ func (s *Seeder) seedRoles(ctx context.Context) error {
 	rolesToInsert := make([]authorisation.Role, len(roles))
 	for k, v := range roles {
 		rolesToInsert[k] = authorisation.Role{
-			Id:          v.id,
+			ID:          v.id,
 			RoleName:    v.roleName,
 			RoleKey:     v.roleKey,
 			Description: v.description,
@@ -183,13 +183,12 @@ func (s *Seeder) seedRolePermissions(ctx context.Context) error {
 	args = append(args, staffKey...)
 
 	// Bulk insert in a transaction
-	err := s.Trx.Transaction(ctx, func(txCtx context.Context) error {
-		db := database.DbFromTransaction(txCtx, s.DB)
+	return s.Trx.Transaction(ctx, func(txCtx context.Context) error {
+		db := database.DBFromTransaction(txCtx, s.DB)
 		if err := db.Exec(query, args...).Error; err != nil {
 			// Triggers a rollback
 			return err
 		}
 		return nil // automatically commit when done
 	})
-	return err
 }

@@ -35,8 +35,6 @@ type loginResponse struct {
 	Token string `json:"jwt_token"`
 }
 
-// godoc
-// Login
 // @Summary		Login and return jwt
 // @Description	Logs in a user, adds them to a 2hr session and return jwt
 // @Tags		authentication
@@ -49,10 +47,10 @@ type loginResponse struct {
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	var req loginRequest
 	var res tokenResponse
-	errJsonDecoder := json.Reader(r, &req)
+	errJSONDecoder := json.Reader(r, &req)
 
-	if errJsonDecoder != nil {
-		json.RequestErrorHandler(w, errJsonDecoder)
+	if errJSONDecoder != nil {
+		json.RequestErrorHandler(w, errJSONDecoder)
 		return
 	}
 
@@ -68,13 +66,8 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	session.Values[sessions.JWTToken] = token
-	//deleting a session
+	// deleting a session
 	delete(session.Values, sessions.SessionType)
-
-	if err != nil {
-		http.Error(w, "failed to save token", http.StatusInternalServerError)
-		return
-	}
 
 	res.Token = token
 	res.Session = session
@@ -155,10 +148,10 @@ type passwordResetRequest struct {
 func (h *Handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req passwordResetRequest
 
-	errJsonDecode := json.Reader(r, req)
-	if errJsonDecode != nil {
+	errJSONDecoder := json.Reader(r, req)
+	if errJSONDecoder != nil {
 		// Sends a default status 400
-		json.RequestErrorHandler(w, errJsonDecode)
+		json.RequestErrorHandler(w, errJSONDecoder)
 		return
 	}
 

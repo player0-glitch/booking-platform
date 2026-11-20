@@ -1,9 +1,11 @@
+// Package adapters is an adapter package
 package adapters
 
 import (
+	"context"
+
 	"booking-platform/internal/authentication"
 	"booking-platform/internal/modules/user"
-	"context"
 )
 
 type UserAdapter struct {
@@ -23,7 +25,7 @@ func (a *UserAdapter) GetByEmail(ctx context.Context, email string) (*authentica
 	}
 
 	authUser := &authentication.AuthUser{
-		Id:            (userModel.Base.ID),
+		ID:            userModel.ID,
 		Email:         *userModel.Email,
 		PasswordHash:  userModel.PasswordHash,
 		AccountStatus: string(userModel.AccountStatus),

@@ -1,4 +1,4 @@
-// package authentication this middleware does not create a user or a customer. It only creats a
+// Package authentication this middleware does not create a user or a customer. It only creats a
 // persistent session.
 package authentication
 
@@ -27,7 +27,6 @@ func NewAuthenticationMiddleware(session *sessions.Manager, token JwtTokenValida
 	}
 }
 
-// godoc
 // RequiresAuthentication only checks that a jwt token is required to be authenticated here
 func (m *AuthenticationMiddleware) RequiresAuthentication(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

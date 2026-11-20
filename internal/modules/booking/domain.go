@@ -1,16 +1,26 @@
+// Package booking
 package booking
 
 import (
-	"booking-platform/internal/core"
 	"time"
+
+	"booking-platform/internal/core"
 
 	"github.com/google/uuid"
 )
 
+type allocationStatus string
+
+const (
+	allocationStatusHeld     allocationStatus = "held"
+	allocationStatusActive   allocationStatus = "active"
+	allocationStatusReleased allocationStatus = "released"
+)
+
 type BookingAllocationStatuss struct {
 	core.Base
-	BookingId    uuid.UUID `gorm:"type:uuid;foreignKey"`
-	ResourceId   uuid.UUID `gorm:"type:uuid;foreignKey"`
+	BookingID    uuid.UUID `gorm:"type:uuid;foreignKey"`
+	ResourceID   uuid.UUID `gorm:"type:uuid;foreignKey"`
 	BlockedFrom  time.Time
 	BlockedUntil time.Time
 	Exclusive    bool
@@ -22,11 +32,23 @@ func (BookingAllocationStatuss) TableName() string {
 	return "booking_allocations"
 }
 
+type bookingStatus string
+
+const (
+	bookingPending   bookingStatus = "pending"
+	bookingConfirmed bookingStatus = "confirmed"
+	bookingDeclined  bookingStatus = "declined"
+	bookingCancelled bookingStatus = "cancelled"
+	bookingCompleted bookingStatus = "completed"
+	bookingNoShow    bookingStatus = "no show"
+	bookingExpired   bookingStatus = "expired"
+)
+
 type Bookings struct {
 	core.Base
-	OrganisationId  uuid.UUID `gorm:"type:uuid;foreignKey"`
-	CustomerId      uuid.UUID `gorm:"type:uuid;foreignKey"`
-	ServicedId      uuid.UUID `gorm:"type:uuid;foreignKey"`
+	OrganisationID  uuid.UUID `gorm:"type:uuid;foreignKey"`
+	CustomerID      uuid.UUID `gorm:"type:uuid;foreignKey"`
+	ServicedID      uuid.UUID `gorm:"type:uuid;foreignKey"`
 	StartAt         time.Time
 	EndsAt          time.Time
 	Notes           string

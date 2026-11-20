@@ -1,3 +1,4 @@
+// Package json
 package json
 
 import (
@@ -6,23 +7,23 @@ import (
 )
 
 type ErrorResponse struct {
-	//Http Status Codes for errors
+	// Http Status Codes for errors
 	Code int `json:"status"`
-	//Associated Http Error message
+	// Associated Http Error message
 	Message string `json:"message"`
 }
 
-// writeJsonResponse writes a json repsonse with a given status code and
+// Write writes a json repsonse with a given status code and
 // encode the data payload.
 // 'data' being any allows it to be 'templated'
 func Write(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	json.NewEncoder(w).Encode(data)
+	_ = json.NewEncoder(w).Encode(data)
 }
 
-// Should json decoding of a request fail, provide an error as a message
+// WriteError should json decoding of a request fail, provide an error as a message
 func WriteError(w http.ResponseWriter, status int, message string) {
 	errResponse := ErrorResponse{
 		Code:    status,
@@ -31,20 +32,21 @@ func WriteError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 
-	json.NewEncoder(w).Encode(errResponse)
+	_ = json.NewEncoder(w).Encode(errResponse)
 }
+
 func Reader(r *http.Request, data any) error {
 	decoder := json.NewDecoder(r.Body)
-	//making requests strict. Server throws error
-	//when request body is unexpected
+	// making requests strict. Server throws error
+	// when request body is unexpected
 	decoder.DisallowUnknownFields()
 	return decoder.Decode(data)
 }
 
 // Global HTTP handler errors. These are typically shared between all modules
 var (
-	//godoc
-	//Used to return errors that occur in the API request that the consumer needs to resolve
+	// godoc
+	// Used to return errors that occur in the API request that the consumer needs to resolve
 	RequestErrorHandler = func(w http.ResponseWriter, err error) {
 		WriteError(w, http.StatusBadRequest, err.Error())
 	}

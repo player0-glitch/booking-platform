@@ -1,10 +1,11 @@
 package authorisation
 
 import (
-	"booking-platform/internal/database"
 	"context"
 	"errors"
 	"time"
+
+	"booking-platform/internal/database"
 
 	"github.com/google/uuid"
 )
@@ -31,8 +32,8 @@ func NewService(repo *Repository, trx database.TransactorInterface) *Service {
 type grantRoleInput struct {
 	ActorID        uuid.UUID
 	UserID         uuid.UUID
-	RoleId         int32
-	OrganisationId *uuid.UUID
+	RoleID         int32
+	OrganisationID *uuid.UUID
 	ExpiresAt      *time.Time
 }
 
@@ -48,11 +49,12 @@ func (s *Service) HasPermissions(
 
 func (s *Service) GrantRole(
 	ctx context.Context,
-	input grantRoleInput) (*RoleGrant, error) {
-	//basic validation
+	input grantRoleInput,
+) (*RoleGrant, error) {
+	// basic validation
 	if input.ActorID == uuid.Nil ||
 		input.UserID == uuid.Nil ||
-		input.RoleId <= 0 {
+		input.RoleID <= 0 {
 		return nil, ErrInvalidGrant
 	}
 
@@ -60,9 +62,8 @@ func (s *Service) GrantRole(
 		ctx,
 		input.UserID,
 		"role.grants",
-		input.OrganisationId,
+		input.OrganisationID,
 	)
-
 	if err != nil {
 		return nil, err
 	}
@@ -82,31 +83,31 @@ func (s *Service) GrantRole(
 
 		if err := s.repo.PreventDuplicateActiveGrants(
 			txCtx, input.UserID,
-			input.RoleId, input.OrganisationId); err != nil {
+			input.RoleID, input.OrganisationID); err != nil {
 			return err
 		}
 		grant := RoleGrant{
-			UserId:         input.UserID,
-			RoleId:         input.RoleId,
-			OrganisationId: *input.OrganisationId,
+			UserID:         input.UserID,
+			RoleID:         input.RoleID,
+			OrganisationID: *input.OrganisationID,
 			GrantedBy:      input.ActorID,
 			ExpiresAt:      input.ExpiresAt,
 		}
 		return s.repo.CreateGrant(txCtx, &grant)
 	})
 
-	return nil, nil
+	return nil, err
 }
-func (s *Service) RevokeRole(ctx context.Context, actorId, grantId uuid.UUID) error {
-	if actorId == uuid.Nil || grantId == uuid.Nil {
+
+func (s *Service) RevokeRole(ctx context.Context, actorID, grantID uuid.UUID) error {
+	if actorID == uuid.Nil || grantID == uuid.Nil {
 		return ErrInvalidGrant
 	}
-	grant, err := s.repo.GetRoleToRevoke(ctx, actorId, grantId)
+	grant, err := s.repo.GetRoleToRevoke(ctx, actorID, grantID)
 	if err != nil {
 		return ErrGrantNotFound
 	}
-	isAllowed, err := s.repo.HasPermissions(ctx, actorId, "roles.grant", &grant.OrganisationId)
-
+	isAllowed, err := s.repo.HasPermissions(ctx, actorID, "roles.grant", &grant.OrganisationID)
 	if err != nil {
 		return err
 	}
@@ -114,5 +115,5 @@ func (s *Service) RevokeRole(ctx context.Context, actorId, grantId uuid.UUID) er
 	if !isAllowed {
 		return ErrForbidden
 	}
-	return s.repo.RevokeRole(ctx, grantId)
+	return s.repo.RevokeRole(ctx, grantID)
 }

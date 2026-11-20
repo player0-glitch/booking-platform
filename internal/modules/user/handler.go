@@ -30,7 +30,6 @@ func NewUserController(userSvc UserServiceInterface) *UserHandler {
 	}
 }
 
-// User godoc
 // @Summary		Create A New User
 // @Tags		users
 // @Param request body createUserRequest true  "User Object type"
@@ -41,22 +40,25 @@ func NewUserController(userSvc UserServiceInterface) *UserHandler {
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req createUserRequest
 	// parse the json request
-	errJsonDecoder = json.Reader(r, &req)
-
-	if errJsonDecoder != nil {
-		json.RequestErrorHandler(w, errJsonDecoder)
+	if errJSONDecoder = json.Reader(r, &req); errJSONDecoder != nil {
+		json.RequestErrorHandler(w, errJSONDecoder)
 		return
 	}
+
+	if err := req.Validate(); err != nil {
+		json.RequestErrorHandler(w, err)
+		return
+	}
+
 	user, errSvc := h.userService.CreateUser(r.Context(), req.FirstName, req.LastName, req.Email, req.Password)
 
 	if errSvc != nil {
-		json.InternalErrorHandler(w, errors.New("Failed To Create User"))
+		json.InternalErrorHandler(w, errors.New("failed to create user"))
 		return
 	}
 	json.Write(w, http.StatusCreated, &user)
 }
 
-// User godoc
 // @Summary		Retrieve All Users
 // @Tags		users
 // @Produce		json
@@ -66,7 +68,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	users, err := h.userService.GetAll(r.Context())
 	if err != nil {
-		json.RequestErrorHandler(w, errors.New("Server Failed To Get All Users"))
+		json.RequestErrorHandler(w, errors.New("server failed to get all users"))
 		return
 	}
 
@@ -77,7 +79,6 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	json.Write(w, http.StatusOK, users)
 }
 
-// User godoc
 // @Security	BearerAuth
 // @Summary		Retrieve user by id
 // @Tags		users
@@ -160,20 +161,3 @@ func (c *UserHandler) SoftDeleteByID(w http.ResponseWriter, r *http.Request) {
 	}
 	json.Write(w, http.StatusAccepted, "User Deleted Softly")
 }
-
-// func (h *UserHandler) GetUsersByRole(w http.ResponseWriter, r *http.Request) {
-// 	rolename := chi.URLParam(r, "rolename")
-
-// 	users, err := h.userService.GetUsersByRole(r.Context(), rolename)
-// 	if err != nil {
-// 		json.WriteError(w, http.StatusInternalServerError, err.Error())
-// 		return
-// 	}
-
-// 	if len(users) == 0 {
-// 		json.Write(w, http.StatusNoContent, "No Users For Give Role")
-// 		return
-// 	}
-
-// 	json.Write(w, http.StatusOK, users)
-// }

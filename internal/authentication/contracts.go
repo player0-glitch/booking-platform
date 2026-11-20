@@ -6,16 +6,13 @@ import (
 	"github.com/google/uuid"
 )
 
-// User struct with the attributes expected byt the Auth Domain
-// This is adapted to from the User model
 type AuthUser struct {
-	Id            uuid.UUID
+	ID            uuid.UUID
 	Email         string
 	PasswordHash  *string
 	AccountStatus string
 }
 
-// Contract that the Auth Domain expect to read from the User Domain
 type UserReaderInterface interface {
 	GetByEmail(ctx context.Context, email string) (*AuthUser, error)
 }

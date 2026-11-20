@@ -1,9 +1,10 @@
 package authentication
 
 import (
-	"booking-platform/internal/database"
 	"context"
 	"time"
+
+	"booking-platform/internal/database"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -20,16 +21,18 @@ func NewPasswordRepository(db *gorm.DB) *PasswordRepository {
 }
 
 func (r *PasswordRepository) FindUserToken(ctx context.Context, email string) (uuid.UUID, error) {
-	var userId uuid.UUID
+	var userID uuid.UUID
 	err := r.db.WithContext(ctx).Table("users").
 		Where("email = ?", &email).
-		Scan(&userId)
-	return userId, err.Error
+		Scan(&userID)
+	return userID, err.Error
 }
 
-func (r *PasswordRepository) CreateEntry(ctx context.Context, userId uuid.UUID, hash string, expiresAt time.Time) error {
+func (r *PasswordRepository) CreateEntry(ctx context.Context,
+	userID uuid.UUID, hash string, expiresAt time.Time,
+) error {
 	p := &PasswordReset{
-		UserID:    userId,
+		UserID:    userID,
 		TokenHash: hash,
 		ExpiresAt: expiresAt,
 	}
@@ -46,27 +49,22 @@ func (r *PasswordRepository) LookupToken(ctx context.Context, tokenHash string) 
 	return &p, err.Error
 }
 
-// godoc
-// Updates the user's password hash with the hash from reset password and removes user from password reset entry
-func (r *PasswordRepository) UpdatePasswordReset(ctx context.Context, passwordHash []byte, userId uuid.UUID) error {
-	//Will pass r.db to run in a transaction if called within such a context
-	db := database.DbFromTransaction(ctx, r.db)
+// UpdatePasswordReset Updates the user's password hash with the hash from reset password and removes user from password reset entry
+func (r *PasswordRepository) UpdatePasswordReset(ctx context.Context, passwordHash []byte, userID uuid.UUID) error {
+	// Will pass r.db to run in a transaction if called within such a context
+	db := database.DBFromTransaction(ctx, r.db)
 	return db.Table("users").
-		Where("id = ?", userId).Update("password_hash", passwordHash).Error
+		Where("id = ?", userID).Update("password_hash", passwordHash).Error
 }
 
-// godoc
-// Deletes a user's password request once password is successfully reset
-func (r *PasswordRepository) DeleteEntryByUserId(ctx context.Context, userID uuid.UUID) error {
+// DeleteEntryByUserID Deletes a user's password request once password is successfully reset
+func (r *PasswordRepository) DeleteEntryByUserID(ctx context.Context, userID uuid.UUID) error {
 	return r.db.WithContext(ctx).
 		Where("user_id = ?", userID).
 		Delete(&PasswordReset{}).Error
 }
 
-// godoc
-// Delete Password Reset entry from db
 func (r *PasswordRepository) DeleteEntry(ctx context.Context, tokenHash string) error {
-
-	db := database.DbFromTransaction(ctx, r.db)
+	db := database.DBFromTransaction(ctx, r.db)
 	return db.Where("token = ?", tokenHash).Delete(&PasswordReset{}).Error
 }
